@@ -31,6 +31,12 @@
             android:layout_height="wrap_content"
             android:text="GO SOCKET" 
             />
+        <Button 
+            android:id="@+id/button_go_udp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="GO    UDP" 
+            />
         
     </LinearLayout>
     

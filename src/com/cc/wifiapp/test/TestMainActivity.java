@@ -44,6 +44,17 @@ public class TestMainActivity extends Activity  {
 			}
 		});
 		
+		this.findViewById(R.id.button_go_udp).setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				Intent in = new Intent();
+				
+				in.setClass(getApplicationContext(), UDPtestActivity.class);
+				mContext.startActivity(in);
+			}
+		});
 	}
 
 	@Override
