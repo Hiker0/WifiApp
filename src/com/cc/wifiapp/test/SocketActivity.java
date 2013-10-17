@@ -34,8 +34,80 @@ public class SocketActivity extends Activity {
     ClientThread mClientThread;
     Handler mHandler=null;
     
-    
-    
+      
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		this.setContentView(R.layout.socket_activity);
+		
+		send = (Button) findViewById(R.id.button_socket_send); 
+		
+		send.setOnClickListener(new View.OnClickListener() {
+				
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				if(mClientThread != null){
+					mClientThread.sendMessage(data);
+				}
+			}
+		});
+		
+		send.setEnabled(false);
+		
+		mHandler = new Handler(){
+
+			@Override
+			public void handleMessage(Message msg) {
+				// TODO Auto-generated method stub
+				switch(msg.what){
+					case CLIENT_OK:
+						send.setEnabled(true);
+						break;
+					default:
+						break;
+					
+				}
+			}
+			
+		};
+		
+	}
+
+	@Override
+	protected void onDestroy() {
+		// TODO Auto-generated method stub
+		super.onDestroy();
+	}
+
+	@Override
+	protected void onStart() {
+		// TODO Auto-generated method stub
+		super.onStart();
+		
+		mServerThread = new SocketServerThread(10000);
+		mClientThread = new ClientThread(mHandler,"127.0.0.1",10000);
+		//new CreateAsyncTask().execute(null,null,null);
+		
+		
+	}
+
+	@Override
+	protected void onStop() {
+		// TODO Auto-generated method stub
+		Log.d(TAG,"wifiapp:¹Ø±Õ" );
+		
+		mServerThread.onStop();
+		mServerThread= null;
+		
+		mClientThread.onStop();
+		mClientThread=null;
+		
+		super.onStop();
+
+	}
+	//*******************************************************************************************************************************//	
 	class ChatThread extends Thread {
 
 		Socket mSocket;
@@ -398,81 +470,4 @@ public class SocketActivity extends Activity {
 //		
 //
 //	};
-	
-	//*******************************************************************************************************************************//
-      
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
-		super.onCreate(savedInstanceState);
-		this.setContentView(R.layout.socket_activity);
-		
-		send = (Button) findViewById(R.id.button_socket_send); 
-		
-		send.setOnClickListener(new View.OnClickListener() {
-				
-			@Override
-			public void onClick(View v) {
-				// TODO Auto-generated method stub
-				if(mClientThread != null){
-					mClientThread.sendMessage(data);
-				}
-			}
-		});
-		
-		send.setEnabled(false);
-		
-		mHandler = new Handler(){
-
-			@Override
-			public void handleMessage(Message msg) {
-				// TODO Auto-generated method stub
-				switch(msg.what){
-					case CLIENT_OK:
-						send.setEnabled(true);
-						break;
-					default:
-						break;
-					
-				}
-			}
-			
-		};
-		
-	}
-
-	@Override
-	protected void onDestroy() {
-		// TODO Auto-generated method stub
-		super.onDestroy();
-	}
-
-	@Override
-	protected void onStart() {
-		// TODO Auto-generated method stub
-		super.onStart();
-		
-		mServerThread = new SocketServerThread(10000);
-		mClientThread = new ClientThread(mHandler,"127.0.0.1",10000);
-		//new CreateAsyncTask().execute(null,null,null);
-		
-		
-	}
-
-	@Override
-	protected void onStop() {
-		// TODO Auto-generated method stub
-		Log.d(TAG,"wifiapp:¹Ø±Õ" );
-		
-		mServerThread.onStop();
-		mServerThread= null;
-		
-		mClientThread.onStop();
-		mClientThread=null;
-		
-		super.onStop();
-
-	}
-	
-
 }
