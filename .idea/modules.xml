@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/UdpListener/UdpListener.iml" filepath="$PROJECT_DIR$/UdpListener/UdpListener.iml" />
+      <module fileurl="file://$PROJECT_DIR$/WifiApp.iml" filepath="$PROJECT_DIR$/WifiApp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/appclient/appclient.iml" filepath="$PROJECT_DIR$/appclient/appclient.iml" />
+      <module fileurl="file://$PROJECT_DIR$/apphost/apphost.iml" filepath="$PROJECT_DIR$/apphost/apphost.iml" />
+    </modules>
+  </component>
+</project>
