@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    >
+    <EditText
+        android:id = "@+id/ip_3"
+        style="@style/IpItemViewStyle"
+        />
+    <TextView
+        android:id = "@+id/split_3"
+        style="@style/IpSplitViewStyle"
+        />
+    <EditText
+        android:id = "@+id/ip_2"
+        style="@style/IpItemViewStyle"
+        />
+    <TextView
+        android:id = "@+id/split_2"
+        style="@style/IpSplitViewStyle"
+        />
+    <EditText
+        android:id = "@+id/ip_1"
+        style="@style/IpItemViewStyle"
+        />
+    <TextView
+        android:id = "@+id/split_1"
+        style="@style/IpSplitViewStyle"
+        />
+    <EditText
+        android:id = "@+id/ip_0"
+        style="@style/IpItemViewStyle"
+        />
+</merge>

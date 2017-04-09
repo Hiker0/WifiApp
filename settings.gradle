@@ -1,2 +1,2 @@
-include ':apphost', ':UdpListener'
+include ':apphost', ':UdpListener', ':mylibrary'
 include ':appclient'

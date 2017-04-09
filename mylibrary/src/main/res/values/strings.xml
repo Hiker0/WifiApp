@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">My Library</string>
+    <string name="default_ip">0</string>
+    <string name="default_split">.</string>
+</resources>

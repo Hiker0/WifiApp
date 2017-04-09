@@ -6,6 +6,7 @@
       <module fileurl="file://$PROJECT_DIR$/WifiApp.iml" filepath="$PROJECT_DIR$/WifiApp.iml" />
       <module fileurl="file://$PROJECT_DIR$/appclient/appclient.iml" filepath="$PROJECT_DIR$/appclient/appclient.iml" />
       <module fileurl="file://$PROJECT_DIR$/apphost/apphost.iml" filepath="$PROJECT_DIR$/apphost/apphost.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mylibrary/mylibrary.iml" filepath="$PROJECT_DIR$/mylibrary/mylibrary.iml" />
     </modules>
   </component>
 </project>

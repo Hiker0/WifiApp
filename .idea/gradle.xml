@@ -11,6 +11,7 @@
             <option value="$PROJECT_DIR$/UdpListener" />
             <option value="$PROJECT_DIR$/appclient" />
             <option value="$PROJECT_DIR$/apphost" />
+            <option value="$PROJECT_DIR$/mylibrary" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

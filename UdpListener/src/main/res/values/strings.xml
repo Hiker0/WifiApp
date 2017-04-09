@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">Wifiapp</string>
+    <string name="app_name">UdpListener</string>
+    <string name="state_stop">stop</string>
+    <string name="state_listening">listening</string>
+    <string name="btn_start">Start Listening</string>
+    <string name="btn_stop">Stop Listening</string>
 </resources>
