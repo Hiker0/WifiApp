@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.nfc.FormatException;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -31,11 +32,10 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 
 ;
 
-public class ActivityListener extends Activity {
+public class GroupListenerActivity extends Activity {
     static final String TAG = "ActivityListener";
 
     private String mName = Build.DEVICE;
@@ -46,28 +46,17 @@ public class ActivityListener extends Activity {
     private IpEditView mIpEditView;
     private EditText  mPortView;
     private Button mLauncherButton;
+    private Button mClearButton;
 
     private boolean mListening = false;
     private String mTarAddress = null;
     private int mTarPort = 0;
     private StringBuffer mInfo = null;
 
-    static final String IDENTIFY_ID = "phicomm";
-    static final String CMD_REQ = "req";
-    static final String CMD_ECHO = "echo";
 
-    static final int ID_HOST = 1;
-    static final int ID_CLIENT = 2;
-    static final int ID = ID_HOST;
+    static final String GROUP_DEFAULT_ADDR = "224.0.0.251";
+    static final int GROUP_DEFAULT_PORT = 5353;
 
-    static final String GROUP_BROADCAST_ADDR = "224.0.0.251";
-    static final int HOST_UDP_GROUP_PORT = 10000;
-    static final int CLIENT_UDP_GROUP_PORT = 5353;
-    static final int HOST_UDP_PORT = 10002;
-    static final int CLIENT_UDP_PORT = 10003;
-    static final int HOST_SCOKET_PORT = 20000;
-    static final int CLIENT_SCOKET_PORT = 20001;
-    static final int MAX_SEND_COUNT = 10;
 
     static final int MESSAGE_INIT = 1;
     static final int MESSAGE_LISTEN = 2;
@@ -77,8 +66,6 @@ public class ActivityListener extends Activity {
     static final int MESSAGE_CANCEL_LISTEN = 6;
     static final int MESSAGE_CREATE_SOCKET = 7;
 
-
-    private BroadcastAcceptThread mBroadcastAcceptThread;
     private GroupAcceptThread mGroupAcceptThread;
     WifiManager.MulticastLock mWifiLock;
 
@@ -90,8 +77,23 @@ public class ActivityListener extends Activity {
 
         mInfoView = (TextView) findViewById(R.id.id_text);
         mIpEditView = (IpEditView) findViewById(R.id.ip_addr);
+        try {
+            mIpEditView.setIpAddress(GROUP_DEFAULT_ADDR);
+        }catch (FormatException e){
+
+        }
         mPortView= (EditText) findViewById(R.id.port);
+        mPortView.setText(Integer.toString(GROUP_DEFAULT_PORT));
         mStateView = (TextView) findViewById(R.id.id_state);
+        mClearButton = (Button) findViewById(R.id.button_clear);
+        mClearButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                mInfo = new StringBuffer();
+                mInfoView.setText(mInfo);
+            }
+        });
+
         mLauncherButton = (Button) findViewById(R.id.button);
         mLauncherButton.setOnClickListener(new View.OnClickListener(){
 
@@ -108,15 +110,15 @@ public class ActivityListener extends Activity {
                         try {
                             Integer port = Integer.parseInt(portString);
                             if(port< 0 || port > 65535) {
-                                Toast.makeText(ActivityListener.this, "please input correct port", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(GroupListenerActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
                             }else{
                                 mTarPort= port;
                             }
                         }catch (NumberFormatException e){
-                            Toast.makeText(ActivityListener.this, "please input correct port", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(GroupListenerActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
                         }
                     }else{
-                        Toast.makeText(ActivityListener.this, "please input port", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(GroupListenerActivity.this, "please input port", Toast.LENGTH_SHORT).show();
                     }
 
                     if(mTarPort>0 && mTarPort < 65535){
@@ -215,8 +217,6 @@ public class ActivityListener extends Activity {
                 {
                     mGroupAcceptThread = new GroupAcceptThread(mTarAddress, mTarPort);
                     mGroupAcceptThread.start();
-                    mBroadcastAcceptThread = new BroadcastAcceptThread(mTarPort);
-//                    mBroadcastAcceptThread.start();
                     break;
                 }
                 case MESSAGE_UPDATE_INFO:
@@ -228,10 +228,6 @@ public class ActivityListener extends Activity {
                 case MESSAGE_CANCEL_LISTEN:
                     if (mGroupAcceptThread != null) {
                         mGroupAcceptThread.cancel();
-                    }
-
-                    if(mBroadcastAcceptThread != null){
-                        mBroadcastAcceptThread.cancel();
                     }
                     break;
                 case MESSAGE_CREATE_SOCKET:
@@ -248,54 +244,6 @@ public class ActivityListener extends Activity {
         Message msg = mHandler.obtainMessage(MESSAGE_UPDATE_INFO);
         msg.obj = info;
         msg.sendToTarget();
-    }
-
-    class BroadcastAcceptThread extends Thread {
-        int mPort;
-        boolean mRunning = true;
-        DatagramSocket datagramSocket;
-
-        BroadcastAcceptThread(int port) {
-            mPort = port;
-
-            try {
-                datagramSocket = new DatagramSocket(mPort);
-                datagramSocket.setBroadcast(true);
-            } catch (SocketException e) {
-                e.printStackTrace();
-                Log.d(TAG, "Broadcast DatagramSocket fail" );
-            }
-        }
-
-        @Override
-        public void run() {
-            byte[] message = new byte[512];
-
-            DatagramPacket datagramPacket = new DatagramPacket(message,
-                    message.length);
-            if(datagramSocket == null){
-                mRunning = false;
-            }
-            try {
-                while (mRunning) {
-                    datagramSocket.receive(datagramPacket);
-                    String strMsg = new String(datagramPacket.getData()).trim();
-                    Log.d(TAG, "Broadcast receive:" + strMsg);
-                    postUpdateInfo("Broadcast receive:" + strMsg);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
-
-        public void cancel() {
-            if(datagramSocket != null && !datagramSocket.isClosed()){
-                datagramSocket.close();
-            }
-            postUpdateInfo("Broadcast cancel listening");
-            mRunning = false;
-        }
     }
 
     class GroupAcceptThread extends Thread {

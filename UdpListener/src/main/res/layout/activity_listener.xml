@@ -51,11 +51,23 @@
                 android:inputType="numberSigned"
                 android:minWidth="40dp"/>
         </LinearLayout>
-        <Button
-            android:id="@+id/button"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Start Listening"/>
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Start Listening"/>
+            <Button
+                android:id="@+id/button_clear"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="clear"/>
+        </LinearLayout>
     </LinearLayout>
 
     <TextView

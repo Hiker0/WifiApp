@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     >
     <EditText
-        android:id = "@+id/ip_3"
+        android:id = "@+id/ip_0"
         style="@style/IpItemViewStyle"
         />
     <TextView
@@ -12,7 +12,7 @@
         style="@style/IpSplitViewStyle"
         />
     <EditText
-        android:id = "@+id/ip_2"
+        android:id = "@+id/ip_1"
         style="@style/IpItemViewStyle"
         />
     <TextView
@@ -20,7 +20,7 @@
         style="@style/IpSplitViewStyle"
         />
     <EditText
-        android:id = "@+id/ip_1"
+        android:id = "@+id/ip_2"
         style="@style/IpItemViewStyle"
         />
     <TextView
@@ -28,7 +28,7 @@
         style="@style/IpSplitViewStyle"
         />
     <EditText
-        android:id = "@+id/ip_0"
+        android:id = "@+id/ip_3"
         style="@style/IpItemViewStyle"
         />
 </merge>

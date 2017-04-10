@@ -1,6 +1,7 @@
 package com.alllen.mylibrary;
 
 import android.content.Context;
+import android.nfc.FormatException;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
@@ -22,11 +23,11 @@ public class IpEditView extends LinearLayout {
 
     private static  String TAG = "IpEditView";
     /**
-     * IP3:IP2:IP1:IP0
+     * IP[3]:IP[2]:IP[1]:IP[0]
      */
-    private EditText mIP0,mIP1,mIP2,mIP3;
     private TextView mSplit1,mSplit2,mSplit3;
     private String mSplit;
+    private EditText[] mIPs = new EditText[4];
 
     public IpEditView(Context context) {
         this(context, null);
@@ -54,22 +55,55 @@ public class IpEditView extends LinearLayout {
         super.onFinishInflate();
         LayoutInflater inflater = LayoutInflater.from(getContext());
         inflater.inflate(R.layout.ip_edit_view,this);
-        mIP0 = (EditText) findViewById(R.id.ip_0);
-        mIP1 = (EditText) findViewById(R.id.ip_1);
-        mIP2 = (EditText) findViewById(R.id.ip_2);
-        mIP3 = (EditText) findViewById(R.id.ip_3);
+        mIPs[0] = (EditText) findViewById(R.id.ip_0);
+        mIPs[1] = (EditText) findViewById(R.id.ip_1);
+        mIPs[2] = (EditText) findViewById(R.id.ip_2);
+        mIPs[3] = (EditText) findViewById(R.id.ip_3);
 
-        new TextListener(null, mIP3,mIP2).register();
-        new TextListener(mIP3, mIP2,mIP1).register();
-        new TextListener(mIP2, mIP1,mIP0).register();
-        new TextListener(mIP1, mIP0,null).register();
+        new TextListener(null, mIPs[0],mIPs[1]).register();
+        new TextListener(mIPs[0],mIPs[1],mIPs[2]).register();
+        new TextListener(mIPs[1],mIPs[2],mIPs[3]).register();
+        new TextListener(mIPs[2],mIPs[3],null).register();
 
         mSplit1 = (TextView) findViewById(R.id.split_1);
         mSplit2 = (TextView) findViewById(R.id.split_2);
         mSplit3 = (TextView) findViewById(R.id.split_2);
     }
 
-    void setIpAddress(String ipaddress){
+    private int checkIpString(String ipstr){
+        if(ipstr==null || ipstr.isEmpty() ){
+            Log.d(TAG,"ipstr is empty");
+            return -1;
+        }
+        int ip = -1;
+        try {
+            ip = Integer.parseInt(ipstr);
+        }catch (NumberFormatException e){
+            Log.d(TAG,"ipstr is not a integer");
+            return -1;
+        }
+        if (ip > 255 || ip < 0) {
+            Log.d(TAG,"ip is out of bounce");
+            return -1;
+        }
+        return ip;
+    }
+
+    public void setIpAddress(String ipaddress) throws FormatException {
+        String[] ips = ipaddress.split("\\"+mSplit);
+        if(ips.length != 4){
+            throw new FormatException();
+        }
+
+        for(int i=0;i<4;i++){
+            if(checkIpString(ips[i]) < 0){
+                throw new FormatException();
+            }
+        }
+
+        for(int i=0;i<4;i++){
+            mIPs[i].setText(ips[i]);
+        }
 
     }
     void setSplit(String split){
@@ -85,28 +119,17 @@ public class IpEditView extends LinearLayout {
 
         StringBuilder sb = new StringBuilder();
        String defaultIp = getResources().getString(R.string.default_ip);
-       if(mIP3 == null || mIP3.getText() == null||mIP3.getText().length() == 0){
-           sb.append(defaultIp);
-       }else{
-        sb.append(mIP3.getText().toString());
-       }
-        sb.append(mSplit);
-       if(mIP2 == null || mIP2.getText() == null||mIP2.getText().length() == 0){
-           sb.append(defaultIp);
-       }else{
-           sb.append(mIP2.getText().toString());
-       }
-        sb.append(mSplit);
-       if(mIP1 == null || mIP1.getText() == null||mIP1.getText().length() == 0){
-           sb.append(defaultIp);
-       }else{
-           sb.append(mIP1.getText().toString());
-       }
-        sb.append(mSplit);
-       if(mIP0 == null || mIP0.getText() == null||mIP0.getText().length() == 0){
-           sb.append(defaultIp);
-       }else{
-           sb.append(mIP0.getText().toString());
+       int ip;
+       for(int i=0; i<4;i++){
+           ip = checkIpString(mIPs[i].getText().toString());
+           if(ip > 0){
+               sb.append(ip);
+           }else{
+               sb.append(defaultIp);
+           }
+           if(i != 3) {
+               sb.append(mSplit);
+           }
        }
         return sb.toString();
     }
