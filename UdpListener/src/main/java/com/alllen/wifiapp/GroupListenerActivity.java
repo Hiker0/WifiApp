@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -33,7 +34,7 @@ import java.net.MulticastSocket;
 import java.net.Socket;
 import java.net.SocketException;
 
-;
+;import javax.jmdns.impl.DNSIncoming;
 
 public class GroupListenerActivity extends Activity {
     static final String TAG = "ActivityListener";
@@ -67,13 +68,15 @@ public class GroupListenerActivity extends Activity {
     static final int MESSAGE_CREATE_SOCKET = 7;
 
     private GroupAcceptThread mGroupAcceptThread;
-    WifiManager.MulticastLock mWifiLock;
-
+    private WifiManager.MulticastLock mWifiLock;
+    private PowerManager.WakeLock mWakeLock;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_listener);
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        mWakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "My Tag");
 
         mInfoView = (TextView) findViewById(R.id.id_text);
         mIpEditView = (IpEditView) findViewById(R.id.ip_addr);
@@ -139,6 +142,7 @@ public class GroupListenerActivity extends Activity {
     @Override
     protected void onStop() {
         mWifiLock.release();
+        mWakeLock.release();
         mHandler.obtainMessage(MESSAGE_CANCEL_LISTEN).sendToTarget();
         super.onStop();
     }
@@ -147,6 +151,7 @@ public class GroupListenerActivity extends Activity {
     protected void onStart() {
         super.onStart();
         mWifiLock.acquire();
+        mWakeLock.acquire();
     }
 
 
@@ -280,9 +285,11 @@ public class GroupListenerActivity extends Activity {
             while (mRunning) {
                 try {
                     mMulticastSocket.receive(dp);
-                    String data = new String(buf, 0, dp.getLength());
-                    Log.d(TAG, "group receive:" + data);
-                    postUpdateInfo("group receive:" + data);
+                    //String data = new String(buf, 0, dp.getLength());
+                    DNSIncoming in = new DNSIncoming(dp);
+//                    Log.d(TAG, "group receive:" + data);
+                    postUpdateInfo("********** group receive *************\n");
+                    postUpdateInfo(in.toString());
                 } catch (Exception e) {
                     e.printStackTrace();
                     Log.e(TAG, "group receive fail");
