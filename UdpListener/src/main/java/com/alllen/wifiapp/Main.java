@@ -41,15 +41,15 @@ public class Main extends Activity implements View.OnClickListener {
     public void onClick(View v) {
         int id = v.getId();
         Intent intent = new Intent();
-        intent.setClass(this,GroupListenerActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if(id == R.id.btn_group){
-            intent.putExtra("type","group");
+            intent.setClass(this,GroupListenerActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
         }else if(id == R.id.btn_broadcast){
-            intent.putExtra("type","broadcast");
+            intent.setClass(this,BroadcastListenerActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
         }
-        finish();
+//        finish();
     }
 }

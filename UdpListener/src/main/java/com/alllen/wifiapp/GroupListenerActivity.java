@@ -14,8 +14,11 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,6 +36,8 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
 
 ;import javax.jmdns.impl.DNSIncoming;
 
@@ -70,6 +75,7 @@ public class GroupListenerActivity extends Activity {
     private GroupAcceptThread mGroupAcceptThread;
     private WifiManager.MulticastLock mWifiLock;
     private PowerManager.WakeLock mWakeLock;
+    private Spinner mSpinner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,6 +143,28 @@ public class GroupListenerActivity extends Activity {
         WifiManager manager = (WifiManager) this
                 .getSystemService(Context.WIFI_SERVICE);
         mWifiLock = manager.createMulticastLock("test wifi");
+    }
+    void iniSpinner(){
+
+        List<String> list = new ArrayList<String>();
+        list.add("PhiUdp");
+        list.add("PhiUdp");
+        list.add("PhiUdp");
+
+        ArrayAdapter<String> adapter=new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item,list);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mSpinner = (Spinner) findViewById(R.id.spinner1);
+        mSpinner.setAdapter(adapter);
+        mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view,
+                                       int position, long id) {
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // TODO Auto-generated method stub
+            }
+        });
     }
 
     @Override
@@ -285,11 +313,13 @@ public class GroupListenerActivity extends Activity {
             while (mRunning) {
                 try {
                     mMulticastSocket.receive(dp);
-                    //String data = new String(buf, 0, dp.getLength());
-                    DNSIncoming in = new DNSIncoming(dp);
+                    String data = new String(buf, 0, dp.getLength());
+//                    DNSIncoming in = new DNSIncoming(dp);
 //                    Log.d(TAG, "group receive:" + data);
                     postUpdateInfo("********** group receive *************\n");
-                    postUpdateInfo(in.toString());
+                    //postUpdateInfo(in.toString());
+                    postUpdateInfo(data);
+
                 } catch (Exception e) {
                     e.printStackTrace();
                     Log.e(TAG, "group receive fail");
