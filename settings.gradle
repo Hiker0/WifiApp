@@ -1,2 +1,2 @@
-include ':apphost', ':UdpListener', ':mylibrary', ':jmdns'
+include ':apphost', ':UdpListener', ':mylibrary', ':jmdns', ':udpsender'
 include ':appclient'

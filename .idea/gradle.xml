@@ -13,6 +13,7 @@
             <option value="$PROJECT_DIR$/apphost" />
             <option value="$PROJECT_DIR$/jmdns" />
             <option value="$PROJECT_DIR$/mylibrary" />
+            <option value="$PROJECT_DIR$/udpsender" />
           </set>
         </option>
         <option name="myModules">
@@ -23,6 +24,7 @@
             <option value="$PROJECT_DIR$/apphost" />
             <option value="$PROJECT_DIR$/jmdns" />
             <option value="$PROJECT_DIR$/mylibrary" />
+            <option value="$PROJECT_DIR$/udpsender" />
           </set>
         </option>
       </GradleProjectSettings>

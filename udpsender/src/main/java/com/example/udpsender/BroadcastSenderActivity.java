@@ -1,12 +1,15 @@
-package com.alllen.wifiapp;
+package com.example.udpsender;
 
 import android.app.Activity;
 import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.nfc.FormatException;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
@@ -15,20 +18,23 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.alllen.mylibrary.IpEditView;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 
-;
-
-public class BroadcastListenerActivity extends Activity {
+public class BroadcastSenderActivity extends Activity {
     static final String TAG = "ActivityListener";
 
     private String mName = Build.DEVICE;
     private String mSN = Build.SERIAL;
 
     private TextView mInfoView;
+    private EditText mDataView;
     private TextView mStateView;
     private EditText  mPortView;
     private Button mLauncherButton;
@@ -37,10 +43,10 @@ public class BroadcastListenerActivity extends Activity {
     private String mTarAddress = null;
     private int mTarPort = 0;
     private StringBuffer mInfo = null;
+    private IpEditView mIpEditView;
 
-
-    static final String GROUP_DEFAULT_ADDR = "224.0.0.251";
-    static final int GROUP_DEFAULT_PORT = 5353;
+    static final String GROUP_DEFAULT_ADDR = "255.255.255.255";
+    static final int GROUP_DEFAULT_PORT = 2525;
 
 
     static final int MESSAGE_INIT = 1;
@@ -51,52 +57,48 @@ public class BroadcastListenerActivity extends Activity {
     static final int MESSAGE_CANCEL_LISTEN = 6;
     static final int MESSAGE_CREATE_SOCKET = 7;
 
-
-    private BroadcastAcceptThread mBroadcastAcceptThread;
-    WifiManager.MulticastLock mWifiLock;
+    private UdpSender mSender;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_listener);
-
+        setContentView(R.layout.activity_sender);
+        mDataView = (EditText) findViewById(R.id.id_data);
         mInfoView = (TextView) findViewById(R.id.id_text);
         mPortView= (EditText) findViewById(R.id.port);
         mStateView = (TextView) findViewById(R.id.id_state);
         mLauncherButton = (Button) findViewById(R.id.button);
-        View ipgroup = findViewById(R.id.ip_group);
-        ipgroup.setVisibility(View.GONE);
+        mIpEditView = (IpEditView) findViewById(R.id.ip_addr);
+        try {
+            mIpEditView.setIpAddress(GROUP_DEFAULT_ADDR);
+        }catch (FormatException e){
+
+        }
+        mSender = new UdpSender();
 
         mLauncherButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                if(mListening){
-                    mHandler.sendEmptyMessage(MESSAGE_CANCEL_LISTEN);
-                    updateState(false);
-                }else{
-
-                    String portString = mPortView.getText().toString();
-                    mTarPort = -1;
-                    if(portString != null && !portString.isEmpty()){
-                        try {
-                            Integer port = Integer.parseInt(portString);
-                            if(port< 0 || port > 65535) {
-                                Toast.makeText(BroadcastListenerActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
-                            }else{
-                                mTarPort= port;
-                            }
-                        }catch (NumberFormatException e){
-                            Toast.makeText(BroadcastListenerActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
+                mTarAddress = mIpEditView.getIpAddress();
+                String portString = mPortView.getText().toString();
+                mTarPort = -1;
+                if(portString != null && !portString.isEmpty()){
+                    try {
+                        Integer port = Integer.parseInt(portString);
+                        if(port< 0 || port > 65535) {
+                            Toast.makeText(BroadcastSenderActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
+                        }else{
+                            mTarPort= port;
                         }
-                    }else{
-                        Toast.makeText(BroadcastListenerActivity.this, "please input port", Toast.LENGTH_SHORT).show();
+                    }catch (NumberFormatException e){
+                        Toast.makeText(BroadcastSenderActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
                     }
-
-                    if(mTarPort>0 && mTarPort < 65535){
-                        mHandler.sendEmptyMessage(MESSAGE_LISTEN);
-                        updateState(true);
-                    }
+                }else{
+                    Toast.makeText(BroadcastSenderActivity.this, "please input port", Toast.LENGTH_SHORT).show();
                 }
+                String msg = mDataView.getText().toString();
+                mSender.sendUdp(msg);
+
             }
         });
 
@@ -104,12 +106,10 @@ public class BroadcastListenerActivity extends Activity {
         mHandler.obtainMessage(MESSAGE_INIT).sendToTarget();
         WifiManager manager = (WifiManager) this
                 .getSystemService(Context.WIFI_SERVICE);
-        mWifiLock = manager.createMulticastLock("test wifi");
     }
 
     @Override
     protected void onStop() {
-        mWifiLock.release();
         mHandler.obtainMessage(MESSAGE_CANCEL_LISTEN).sendToTarget();
         super.onStop();
     }
@@ -117,12 +117,12 @@ public class BroadcastListenerActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
-        mWifiLock.acquire();
     }
 
 
     @Override
     protected void onDestroy() {
+        mSender.close();
         super.onDestroy();
     }
 
@@ -182,23 +182,12 @@ public class BroadcastListenerActivity extends Activity {
                     break;
                 case MESSAGE_REQUEST_IP:
                     break;
-                case MESSAGE_LISTEN:
-                {
-                    mBroadcastAcceptThread = new BroadcastAcceptThread(mTarPort);
-                    mBroadcastAcceptThread.start();
-                    break;
-                }
                 case MESSAGE_UPDATE_INFO:
                 {
                     String info = (String) msg.obj;
                     updateInfo(info);
                     break;
                 }
-                case MESSAGE_CANCEL_LISTEN:
-                    if(mBroadcastAcceptThread != null){
-                        mBroadcastAcceptThread.cancel();
-                    }
-                    break;
                 case MESSAGE_CREATE_SOCKET:
 
                     break;
@@ -215,53 +204,77 @@ public class BroadcastListenerActivity extends Activity {
         msg.sendToTarget();
     }
 
-    class BroadcastAcceptThread extends Thread {
-        int mPort;
-        boolean mRunning = true;
-        DatagramSocket datagramSocket;
+    class UdpSender {
+        private HandlerThread mThread;
+        private Handler mHandler;
 
-        BroadcastAcceptThread(int port) {
-            mPort = port;
+        final int MSG_SEND_UDP = 2;
+        final int MSG_SEND_BROADCAST = 3;
 
-            try {
-                datagramSocket = new DatagramSocket(mPort);
-                datagramSocket.setBroadcast(true);
-            } catch (SocketException e) {
-                e.printStackTrace();
-                Log.d(TAG, "Broadcast DatagramSocket fail" );
+        class MyHandler extends  Handler{
+            MyHandler(Looper looper){
+                super(looper);
+            }
+
+            @Override
+            public void handleMessage(Message msg) {
+                switch(msg.what) {
+                    case MSG_SEND_BROADCAST:
+                        broadcastInner((String)msg.obj);
+                        break;
+                }
             }
         }
+        UdpSender() {
+            mThread = new HandlerThread("send thread");
+            mThread.start();
+            mHandler = new MyHandler(mThread.getLooper());
+        }
 
-        @Override
-        public void run() {
-            postUpdateInfo("Start Listenning port=" + mPort);
-            byte[] message = new byte[512];
+        public void close(){
+            mHandler.removeCallbacksAndMessages(null);
+            mThread.quitSafely();
+        }
 
-            DatagramPacket datagramPacket = new DatagramPacket(message,
-                    message.length);
-            if(datagramSocket == null){
-                mRunning = false;
+        public void sendUdp(String data){
+            Message msg = mHandler.obtainMessage(MSG_SEND_BROADCAST);
+            msg.obj = data;
+            mHandler.sendMessage(msg);
+        }
+
+        private void broadcastInner(String info){
+            String msgStr;
+            if(info == null || info.isEmpty()){
+                msgStr = "123";
+            }else{
+                msgStr = info;
             }
-
+            postUpdateInfo("broadcast->"+msgStr);
+            int server_port = mTarPort;
+            DatagramSocket s = null;
             try {
-                while (mRunning) {
-                    datagramSocket.receive(datagramPacket);
-                    String strMsg = new String(datagramPacket.getData()).trim();
-                    Log.d(TAG, "Broadcast receive:" + strMsg);
-                    postUpdateInfo("Broadcast receive:" + strMsg);
-                }
+                s = new DatagramSocket();
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
+            InetAddress local = null;
+            try {
+                local = InetAddress.getByName(mTarAddress);
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
+            int msg_length = msgStr.length();
+            byte[] messageByte = msgStr.getBytes();
+            DatagramPacket p = new DatagramPacket(messageByte, msg_length, local,
+                    server_port);
+            try {
+
+                s.send(p);
+                s.close();
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-        }
-
-        public void cancel() {
-            if(datagramSocket != null && !datagramSocket.isClosed()){
-                datagramSocket.close();
-            }
-            postUpdateInfo("Broadcast cancel listening");
-            mRunning = false;
         }
     }
 

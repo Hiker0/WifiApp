@@ -209,12 +209,12 @@ public class IpEditView extends LinearLayout {
 
         @Override
         public boolean onTouch(View v, MotionEvent event) {
-            if(event.getAction() == MotionEvent.ACTION_UP){
-                v.requestFocus();
-                InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.showSoftInput(v,InputMethodManager.SHOW_FORCED);
-            }
-            return true;
+//            if(event.getAction() == MotionEvent.ACTION_UP){
+//                v.requestFocus();
+//                InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+//                imm.showSoftInput(v,InputMethodManager.SHOW_FORCED);
+//            }
+            return false;
         }
     }
 

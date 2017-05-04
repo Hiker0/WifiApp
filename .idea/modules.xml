@@ -8,6 +8,7 @@
       <module fileurl="file://$PROJECT_DIR$/apphost/apphost.iml" filepath="$PROJECT_DIR$/apphost/apphost.iml" />
       <module fileurl="file://$PROJECT_DIR$/jmdns/jmdns.iml" filepath="$PROJECT_DIR$/jmdns/jmdns.iml" />
       <module fileurl="file://$PROJECT_DIR$/mylibrary/mylibrary.iml" filepath="$PROJECT_DIR$/mylibrary/mylibrary.iml" />
+      <module fileurl="file://$PROJECT_DIR$/udpsender/udpsender.iml" filepath="$PROJECT_DIR$/udpsender/udpsender.iml" />
     </modules>
   </component>
 </project>

@@ -8,8 +8,6 @@ import android.nfc.FormatException;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
 import android.util.Log;
@@ -31,15 +29,13 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 
-;import javax.jmdns.impl.DNSIncoming;
+;
 
 public class GroupListenerActivity extends Activity {
     static final String TAG = "ActivityListener";
