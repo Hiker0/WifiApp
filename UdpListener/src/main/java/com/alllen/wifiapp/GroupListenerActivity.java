@@ -12,6 +12,7 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -75,6 +76,12 @@ public class GroupListenerActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                        |WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                        |WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON,
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                        |WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                        |WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_listener);
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);

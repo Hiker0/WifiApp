@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -22,7 +23,7 @@ import java.net.SocketException;
 
 ;
 
-public class BroadcastListenerActivity extends Activity {
+public class UdpCountActivity extends Activity {
     static final String TAG = "ActivityListener";
 
     private String mName = Build.DEVICE;
@@ -37,11 +38,7 @@ public class BroadcastListenerActivity extends Activity {
     private String mTarAddress = null;
     private int mTarPort = 0;
     private StringBuffer mInfo = null;
-
-
-    static final String GROUP_DEFAULT_ADDR = "224.0.0.251";
-    static final int GROUP_DEFAULT_PORT = 5353;
-
+    private int mCount = 0;
 
     static final int MESSAGE_INIT = 1;
     static final int MESSAGE_LISTEN = 2;
@@ -50,6 +47,7 @@ public class BroadcastListenerActivity extends Activity {
     static final int MESSAGE_UPDATE_INFO = 5;
     static final int MESSAGE_CANCEL_LISTEN = 6;
     static final int MESSAGE_CREATE_SOCKET = 7;
+    static final int MESSAGE_UPDATE_NUM = 8;
 
 
     private BroadcastAcceptThread mBroadcastAcceptThread;
@@ -57,6 +55,12 @@ public class BroadcastListenerActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                        |WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                        |WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON,
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                        |WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                        |WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_listener);
 
@@ -66,7 +70,6 @@ public class BroadcastListenerActivity extends Activity {
         mLauncherButton = (Button) findViewById(R.id.button);
         View ipgroup = findViewById(R.id.ip_group);
         ipgroup.setVisibility(View.GONE);
-
 
         Button cleanButton = (Button) findViewById(R.id.button_clear);
         cleanButton.setOnClickListener(new View.OnClickListener(){
@@ -91,15 +94,15 @@ public class BroadcastListenerActivity extends Activity {
                         try {
                             Integer port = Integer.parseInt(portString);
                             if(port< 0 || port > 65535) {
-                                Toast.makeText(BroadcastListenerActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(UdpCountActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
                             }else{
                                 mTarPort= port;
                             }
                         }catch (NumberFormatException e){
-                            Toast.makeText(BroadcastListenerActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(UdpCountActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
                         }
                     }else{
-                        Toast.makeText(BroadcastListenerActivity.this, "please input port", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(UdpCountActivity.this, "please input port", Toast.LENGTH_SHORT).show();
                     }
 
                     if(mTarPort>0 && mTarPort < 65535){
@@ -144,10 +147,25 @@ public class BroadcastListenerActivity extends Activity {
     }
 
 
+
+    private void postUpdateInfo(String info) {
+        Message msg = mHandler.obtainMessage(MESSAGE_UPDATE_INFO);
+        msg.obj = info;
+        msg.sendToTarget();
+    }
+
+    private void postUpdateNum() {
+        mHandler.sendEmptyMessage(MESSAGE_UPDATE_NUM);
+    }
+
+    private void updateNum() {
+        mInfoView.setText(mInfo+ ":"+mCount);
+    }
+
     private void updateInfo(String line) {
         mInfo.append(line);
         mInfo.append("\n");
-        mInfoView.setText(mInfo);
+        mInfoView.setText(mInfo+ ":"+mCount);
     }
 
     private void updateState(boolean listening){
@@ -194,6 +212,7 @@ public class BroadcastListenerActivity extends Activity {
                     break;
                 case MESSAGE_LISTEN:
                 {
+                    mCount = 0;
                     mBroadcastAcceptThread = new BroadcastAcceptThread(mTarPort);
                     mBroadcastAcceptThread.start();
                     break;
@@ -212,18 +231,16 @@ public class BroadcastListenerActivity extends Activity {
                 case MESSAGE_CREATE_SOCKET:
 
                     break;
+                case MESSAGE_UPDATE_NUM:
+                {
+                    updateNum();
+                    break;
+                }
                 default:
                     break;
             }
         }
     };
-
-
-    private void postUpdateInfo(String info) {
-        Message msg = mHandler.obtainMessage(MESSAGE_UPDATE_INFO);
-        msg.obj = info;
-        msg.sendToTarget();
-    }
 
     class BroadcastAcceptThread extends Thread {
         int mPort;
@@ -257,8 +274,10 @@ public class BroadcastListenerActivity extends Activity {
                 while (mRunning) {
                     datagramSocket.receive(datagramPacket);
                     String strMsg = new String(datagramPacket.getData()).trim();
-                    Log.d(TAG, "Broadcast receive:" + datagramPacket.getAddress().getHostAddress() + datagramPacket.getPort() + strMsg);
-                    postUpdateInfo("Broadcast receive:[" + datagramPacket.getAddress().getHostAddress()+"][" + datagramPacket.getPort() +"] "+ strMsg);
+                    if(strMsg.equals("test")){
+                        mCount ++;
+                        postUpdateNum();
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();

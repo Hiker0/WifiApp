@@ -15,10 +15,12 @@ public class Main extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Button GroupButton = (Button) findViewById(R.id.btn_group);
-        Button BroadcastButton = (Button) findViewById(R.id.btn_broadcast);
-        GroupButton.setOnClickListener(this);
-        BroadcastButton.setOnClickListener(this);
+        Button groupButton = (Button) findViewById(R.id.btn_group);
+        Button broadcastButton = (Button) findViewById(R.id.btn_broadcast);
+        Button testbutton = (Button) findViewById(R.id.btn_test);
+        groupButton.setOnClickListener(this);
+        broadcastButton.setOnClickListener(this);
+        testbutton.setOnClickListener(this);
     }
 
     @Override
@@ -47,6 +49,10 @@ public class Main extends Activity implements View.OnClickListener {
             startActivity(intent);
         }else if(id == R.id.btn_broadcast){
             intent.setClass(this,BroadcastListenerActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }else if(id == R.id.btn_test){
+            intent.setClass(this,UdpCountActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
         }
