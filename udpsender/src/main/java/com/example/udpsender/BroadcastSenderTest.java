@@ -128,7 +128,7 @@ public class BroadcastSenderTest extends Activity {
                     } else {
                         Toast.makeText(BroadcastSenderTest.this, "please input num", Toast.LENGTH_SHORT).show();
                     }
-
+                    updateInfo("Start Sending total="+mTarNum);
                     mHandler.sendEmptyMessage(MESSAGE_CRC_SEND);
                     sending = true;
                 }
@@ -233,8 +233,13 @@ public class BroadcastSenderTest extends Activity {
                         mSendNum ++;
                         mSender.sendUdp("test");
                         mHandler.sendEmptyMessageDelayed(MESSAGE_CRC_SEND,200);
+                        updateNum();
+                    }else{
+                        sending = false;
+                        mLauncherButton.setText("SEND");
+                        updateInfo("finish sending");
                     }
-                    updateNum();
+
 
                     break;
                 default:
