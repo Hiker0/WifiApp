@@ -52,7 +52,7 @@ public class Main extends Activity implements View.OnClickListener {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
         }else if(id == R.id.btn_test){
-            intent.setClass(this,UdpCountActivity.class);
+            intent.setClass(this,UdpEchoActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
         }

@@ -1,5 +1,6 @@
 package com.alllen.wifiapp;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.net.wifi.WifiInfo;
@@ -36,7 +37,10 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-;
+;import javax.jmdns.impl.DNSIncoming;
+
+import static android.content.Context.POWER_SERVICE;
+import static android.content.Context.WIFI_SERVICE;
 
 public class GroupListenerActivity extends Activity {
     static final String TAG = "ActivityListener";
@@ -84,7 +88,7 @@ public class GroupListenerActivity extends Activity {
                         |WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_listener);
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        @SuppressLint("WrongConstant") PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
         mWakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "My Tag");
 
         mInfoView = (TextView) findViewById(R.id.id_text);
@@ -109,6 +113,7 @@ public class GroupListenerActivity extends Activity {
         mLauncherButton = (Button) findViewById(R.id.button);
         mLauncherButton.setOnClickListener(new View.OnClickListener(){
 
+            @SuppressLint("WrongConstant")
             @Override
             public void onClick(View v) {
                 if(mListening){
@@ -143,8 +148,8 @@ public class GroupListenerActivity extends Activity {
 
         mInfo = new StringBuffer();
         mHandler.obtainMessage(MESSAGE_INIT).sendToTarget();
-        WifiManager manager = (WifiManager) this
-                .getSystemService(Context.WIFI_SERVICE);
+        @SuppressLint("WrongConstant") WifiManager manager = (WifiManager) getApplicationContext()
+                .getSystemService(WIFI_SERVICE);
         mWifiLock = manager.createMulticastLock("test wifi");
     }
     void iniSpinner(){
@@ -226,7 +231,7 @@ public class GroupListenerActivity extends Activity {
         mInfo.append("SN:"+mSN);
         mInfo.append("\n");
 
-        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        @SuppressLint("WrongConstant") WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
 
         if (!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
@@ -316,17 +321,24 @@ public class GroupListenerActivity extends Activity {
             while (mRunning) {
                 try {
                     mMulticastSocket.receive(dp);
-                    String data = new String(buf, 0, dp.getLength());
-//                    DNSIncoming in = new DNSIncoming(dp);
-//                    Log.d(TAG, "group receive:" + data);
-                    postUpdateInfo("********** group receive *************\n");
-                    //postUpdateInfo(in.toString());
-                    postUpdateInfo(data);
-
                 } catch (Exception e) {
                     e.printStackTrace();
                     Log.e(TAG, "group receive fail");
                 }
+
+                DNSIncoming in = null;
+                try {
+                    in = new DNSIncoming(dp);
+                    Log.d(TAG, "group receive:" + in);
+                    postUpdateInfo("********** group receive *************\n");
+                    postUpdateInfo(in.toString());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    String data = new String(buf, 0, dp.getLength());
+                    Log.d(TAG, "group receive:" + data);
+                    postUpdateInfo(data);
+                }
+
             }
         }
 

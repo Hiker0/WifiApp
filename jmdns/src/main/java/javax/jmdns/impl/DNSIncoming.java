@@ -468,14 +468,14 @@ public final class DNSIncoming
         }
         buf.append("]");
         buf.append("\n");
-        buf.append("----question--");
+        buf.append("----question--\n");
         for(Object question: questions){
             buf.append(question.toString()+"\n");
         }
 
 
         buf.append("\n");
-        buf.append("----anser--");
+        buf.append("----anser--\n");
         for(Object answer: answers){
             buf.append(answer.toString()+"\n");
         }
