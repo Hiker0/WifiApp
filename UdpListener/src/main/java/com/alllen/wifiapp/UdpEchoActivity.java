@@ -1,5 +1,6 @@
 package com.alllen.wifiapp;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.net.wifi.WifiInfo;
@@ -21,14 +22,17 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
-;
+;import static android.content.Context.WIFI_SERVICE;
+import static android.view.View.*;
+import static android.widget.Toast.LENGTH_SHORT;
 
-public class UdpCountActivity extends Activity {
+public class UdpEchoActivity extends Activity {
     static final String TAG = "ActivityListener";
 
     private String mName = Build.DEVICE;
     private String mSN = Build.SERIAL;
 
+    private Context mContext;
     private TextView mInfoView;
     private TextView mStateView;
     private EditText  mPortView;
@@ -69,10 +73,10 @@ public class UdpCountActivity extends Activity {
         mStateView = (TextView) findViewById(R.id.id_state);
         mLauncherButton = (Button) findViewById(R.id.button);
         View ipgroup = findViewById(R.id.ip_group);
-        ipgroup.setVisibility(View.GONE);
+        ipgroup.setVisibility(GONE);
 
         Button cleanButton = (Button) findViewById(R.id.button_clear);
-        cleanButton.setOnClickListener(new View.OnClickListener(){
+        cleanButton.setOnClickListener(new OnClickListener(){
             @Override
             public void onClick(View v) {
                 mInfo = new StringBuffer();
@@ -80,7 +84,8 @@ public class UdpCountActivity extends Activity {
             }
         });
 
-        mLauncherButton.setOnClickListener(new View.OnClickListener(){
+        mLauncherButton.setOnClickListener(new OnClickListener(){
+            @SuppressLint("WrongConstant")
             @Override
             public void onClick(View v) {
                 if(mListening){
@@ -94,15 +99,15 @@ public class UdpCountActivity extends Activity {
                         try {
                             Integer port = Integer.parseInt(portString);
                             if(port< 0 || port > 65535) {
-                                Toast.makeText(UdpCountActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(mContext, "please input correct port", LENGTH_SHORT).show();
                             }else{
                                 mTarPort= port;
                             }
                         }catch (NumberFormatException e){
-                            Toast.makeText(UdpCountActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mContext, "please input correct port", LENGTH_SHORT).show();
                         }
                     }else{
-                        Toast.makeText(UdpCountActivity.this, "please input port", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(mContext, "please input port", LENGTH_SHORT).show();
                     }
 
                     if(mTarPort>0 && mTarPort < 65535){
@@ -115,8 +120,8 @@ public class UdpCountActivity extends Activity {
 
         mInfo = new StringBuffer();
         mHandler.obtainMessage(MESSAGE_INIT).sendToTarget();
-        WifiManager manager = (WifiManager) this
-                .getSystemService(Context.WIFI_SERVICE);
+        @SuppressLint("WrongConstant") WifiManager manager = (WifiManager) this.getApplicationContext()
+                .getSystemService(WIFI_SERVICE);
         mWifiLock = manager.createMulticastLock("test wifi");
     }
 
@@ -180,6 +185,8 @@ public class UdpCountActivity extends Activity {
             mLauncherButton.setText(R.string.btn_start);
         }
     }
+
+    @SuppressLint("WrongConstant")
     private void initIp() {
         mInfoView.setText(mInfo);
         mInfo.append(mName + "\n");
@@ -187,7 +194,8 @@ public class UdpCountActivity extends Activity {
         mInfo.append("SN:"+mSN);
         mInfo.append("\n");
 
-        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifiManager;
+        wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
 
         if (!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
