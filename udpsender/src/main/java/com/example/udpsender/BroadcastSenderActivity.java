@@ -76,6 +76,15 @@ public class BroadcastSenderActivity extends Activity {
         }
         mSender = new UdpSender();
 
+        Button cleanButton = (Button) findViewById(R.id.button_clear);
+        cleanButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                mInfo = new StringBuffer();
+                mInfoView.setText(mInfo);
+            }
+        });
+
         mLauncherButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
