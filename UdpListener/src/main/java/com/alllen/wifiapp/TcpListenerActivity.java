@@ -1,6 +1,5 @@
 package com.alllen.wifiapp;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.net.wifi.WifiInfo;
@@ -11,7 +10,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -22,17 +20,14 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
-;import static android.content.Context.WIFI_SERVICE;
-import static android.view.View.*;
-import static android.widget.Toast.LENGTH_SHORT;
+;
 
-public class UdpEchoActivity extends Activity {
+public class TcpListenerActivity extends Activity {
     static final String TAG = "ActivityListener";
 
     private String mName = Build.DEVICE;
     private String mSN = Build.SERIAL;
 
-    private Context mContext;
     private TextView mInfoView;
     private TextView mStateView;
     private EditText  mPortView;
@@ -42,7 +37,11 @@ public class UdpEchoActivity extends Activity {
     private String mTarAddress = null;
     private int mTarPort = 0;
     private StringBuffer mInfo = null;
-    private int mCount = 0;
+
+
+    static final String GROUP_DEFAULT_ADDR = "224.0.0.251";
+    static final int GROUP_DEFAULT_PORT = 5353;
+
 
     static final int MESSAGE_INIT = 1;
     static final int MESSAGE_LISTEN = 2;
@@ -51,7 +50,6 @@ public class UdpEchoActivity extends Activity {
     static final int MESSAGE_UPDATE_INFO = 5;
     static final int MESSAGE_CANCEL_LISTEN = 6;
     static final int MESSAGE_CREATE_SOCKET = 7;
-    static final int MESSAGE_UPDATE_NUM = 8;
 
 
     private BroadcastAcceptThread mBroadcastAcceptThread;
@@ -59,12 +57,6 @@ public class UdpEchoActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                        |WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-                        |WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON,
-                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                        |WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-                        |WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_listener);
 
@@ -75,8 +67,9 @@ public class UdpEchoActivity extends Activity {
         View ipgroup = findViewById(R.id.ip_group);
         ipgroup.setVisibility(View.GONE);
 
+
         Button cleanButton = (Button) findViewById(R.id.button_clear);
-        cleanButton.setOnClickListener(new OnClickListener(){
+        cleanButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 mInfo = new StringBuffer();
@@ -84,8 +77,7 @@ public class UdpEchoActivity extends Activity {
             }
         });
 
-        mLauncherButton.setOnClickListener(new OnClickListener(){
-            @SuppressLint("WrongConstant")
+        mLauncherButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 if(mListening){
@@ -99,15 +91,15 @@ public class UdpEchoActivity extends Activity {
                         try {
                             Integer port = Integer.parseInt(portString);
                             if(port< 0 || port > 65535) {
-                                Toast.makeText(mContext, "please input correct port", LENGTH_SHORT).show();
+                                Toast.makeText(TcpListenerActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
                             }else{
                                 mTarPort= port;
                             }
                         }catch (NumberFormatException e){
-                            Toast.makeText(mContext, "please input correct port", LENGTH_SHORT).show();
+                            Toast.makeText(TcpListenerActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
                         }
                     }else{
-                        Toast.makeText(mContext, "please input port", LENGTH_SHORT).show();
+                        Toast.makeText(TcpListenerActivity.this, "please input port", Toast.LENGTH_SHORT).show();
                     }
 
                     if(mTarPort>0 && mTarPort < 65535){
@@ -120,8 +112,8 @@ public class UdpEchoActivity extends Activity {
 
         mInfo = new StringBuffer();
         mHandler.obtainMessage(MESSAGE_INIT).sendToTarget();
-        @SuppressLint("WrongConstant") WifiManager manager = (WifiManager) this.getApplicationContext()
-                .getSystemService(WIFI_SERVICE);
+        WifiManager manager = (WifiManager) this
+                .getSystemService(Context.WIFI_SERVICE);
         mWifiLock = manager.createMulticastLock("test wifi");
     }
 
@@ -152,25 +144,10 @@ public class UdpEchoActivity extends Activity {
     }
 
 
-
-    private void postUpdateInfo(String info) {
-        Message msg = mHandler.obtainMessage(MESSAGE_UPDATE_INFO);
-        msg.obj = info;
-        msg.sendToTarget();
-    }
-
-    private void postUpdateNum() {
-        mHandler.sendEmptyMessage(MESSAGE_UPDATE_NUM);
-    }
-
-    private void updateNum() {
-        mInfoView.setText(mInfo+ ":"+mCount);
-    }
-
     private void updateInfo(String line) {
         mInfo.append(line);
         mInfo.append("\n");
-        mInfoView.setText(mInfo+ ":"+mCount);
+        mInfoView.setText(mInfo);
     }
 
     private void updateState(boolean listening){
@@ -185,8 +162,6 @@ public class UdpEchoActivity extends Activity {
             mLauncherButton.setText(R.string.btn_start);
         }
     }
-
-    @SuppressLint("WrongConstant")
     private void initIp() {
         mInfoView.setText(mInfo);
         mInfo.append(mName + "\n");
@@ -194,8 +169,7 @@ public class UdpEchoActivity extends Activity {
         mInfo.append("SN:"+mSN);
         mInfo.append("\n");
 
-        WifiManager wifiManager;
-        wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 
         if (!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
@@ -220,7 +194,6 @@ public class UdpEchoActivity extends Activity {
                     break;
                 case MESSAGE_LISTEN:
                 {
-                    mCount = 0;
                     mBroadcastAcceptThread = new BroadcastAcceptThread(mTarPort);
                     mBroadcastAcceptThread.start();
                     break;
@@ -239,16 +212,18 @@ public class UdpEchoActivity extends Activity {
                 case MESSAGE_CREATE_SOCKET:
 
                     break;
-                case MESSAGE_UPDATE_NUM:
-                {
-                    updateNum();
-                    break;
-                }
                 default:
                     break;
             }
         }
     };
+
+
+    private void postUpdateInfo(String info) {
+        Message msg = mHandler.obtainMessage(MESSAGE_UPDATE_INFO);
+        msg.obj = info;
+        msg.sendToTarget();
+    }
 
     class BroadcastAcceptThread extends Thread {
         int mPort;
@@ -282,10 +257,8 @@ public class UdpEchoActivity extends Activity {
                 while (mRunning) {
                     datagramSocket.receive(datagramPacket);
                     String strMsg = new String(datagramPacket.getData()).trim();
-                    if(strMsg.equals("test")){
-                        mCount ++;
-                        postUpdateNum();
-                    }
+                    Log.d(TAG, "Broadcast receive:" + datagramPacket.getAddress().getHostAddress() + datagramPacket.getPort() + strMsg);
+                    postUpdateInfo("Broadcast receive:[" + datagramPacket.getAddress().getHostAddress()+"][" + datagramPacket.getPort() +"] "+ strMsg);
                 }
             } catch (IOException e) {
                 e.printStackTrace();

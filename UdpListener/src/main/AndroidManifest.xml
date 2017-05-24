@@ -22,7 +22,10 @@
         <activity android:name=".BroadcastListenerActivity">
         </activity>
 
-        <activity android:name=".UdpCountActivity">
+        <activity android:name=".TcpListenerActivity">
+        </activity>
+
+        <activity android:name=".UdpEchoActivity">
         </activity>
     </application>
 

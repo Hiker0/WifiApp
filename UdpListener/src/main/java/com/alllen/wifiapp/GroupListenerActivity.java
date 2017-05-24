@@ -328,6 +328,8 @@ public class GroupListenerActivity extends Activity {
 
                 DNSIncoming in = null;
                 try {
+
+
                     in = new DNSIncoming(dp);
                     Log.d(TAG, "group receive:" + in);
                     postUpdateInfo("********** group receive *************\n");
