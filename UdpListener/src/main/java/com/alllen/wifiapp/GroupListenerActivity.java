@@ -342,6 +342,7 @@ public class GroupListenerActivity extends Activity {
                 }
 
             }
+            postUpdateInfo("Listenning end");
         }
 
         public void cancel() {
@@ -360,48 +361,6 @@ public class GroupListenerActivity extends Activity {
         }
     }
 
-    public class SocketThread extends Thread {
-        Socket socket;
-        BufferedWriter bw;
-        BufferedReader br;
 
-        public SocketThread(Socket s) {
-            this.socket = s;
-            try {
-                bw = new BufferedWriter(new OutputStreamWriter(
-                        socket.getOutputStream(), "utf-8"));
-                br = new BufferedReader(new InputStreamReader(
-                        socket.getInputStream(), "utf-8"));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public void out(String out) {
-            try {
-                bw.write(out + "\n");
-                bw.flush();
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        public void run() {
-            try {
-                String line = null;
-                while ((line = br.readLine()) != null) {
-                    System.out.println("客户端发来数据："+line);
-                }
-                br.close();
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
 }

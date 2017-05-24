@@ -263,7 +263,7 @@ public class BroadcastListenerActivity extends Activity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
+            postUpdateInfo("Listenning end");
         }
 
         public void cancel() {
