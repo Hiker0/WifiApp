@@ -4,14 +4,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.nfc.FormatException;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
 import android.os.Message;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -19,15 +15,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alllen.mylibrary.IpEditView;
+import com.alllen.mylibrary.TcpClient;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-
-public class BroadcastSenderActivity extends Activity {
+public class TcpSenderActivity extends Activity {
     static final String TAG = "ActivityListener";
 
     private String mName = Build.DEVICE;
@@ -35,49 +25,48 @@ public class BroadcastSenderActivity extends Activity {
 
     private TextView mInfoView;
     private EditText mDataView;
-    private TextView mStateView;
-    private EditText  mPortView;
-    private Button mLauncherButton;
+    private EditText mPortView;
+    private Button sendButton;
+    private Button connectButton;
 
-    private boolean mListening = false;
-    private String mTarAddress = null;
-    private int mTarPort = 0;
     private StringBuffer mInfo = null;
     private IpEditView mIpEditView;
-
-    static final String GROUP_DEFAULT_ADDR = "255.255.255.255";
-    static final int GROUP_DEFAULT_PORT = 2525;
-
+    private TcpClient mClient = null;
 
     static final int MESSAGE_INIT = 1;
-    static final int MESSAGE_LISTEN = 2;
+    static final int MESSAGE_CONNECT = 2;
     static final int MESSAGE_SEND_IP = 3;
     static final int MESSAGE_REQUEST_IP = 4;
     static final int MESSAGE_UPDATE_INFO = 5;
-    static final int MESSAGE_CANCEL_LISTEN = 6;
+    static final int MESSAGE_DISCONNECT = 6;
     static final int MESSAGE_CREATE_SOCKET = 7;
 
-    private UdpSender mSender;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_sender);
-        mDataView = (EditText) findViewById(R.id.id_data);
-        mInfoView = (TextView) findViewById(R.id.id_text);
-        mPortView= (EditText) findViewById(R.id.port);
-        mStateView = (TextView) findViewById(R.id.id_state);
-        mLauncherButton = (Button) findViewById(R.id.button);
-        mIpEditView = (IpEditView) findViewById(R.id.ip_addr);
-        try {
-            mIpEditView.setIpAddress(GROUP_DEFAULT_ADDR);
-        }catch (FormatException e){
+        setContentView(R.layout.activity_tcp_connect);
+        mInfo = new StringBuffer();
+        mHandler.obtainMessage(MESSAGE_INIT).sendToTarget();
+        WifiManager manager = (WifiManager) this.getApplicationContext()
+                .getSystemService(Context.WIFI_SERVICE);
+        initView();
+    }
 
-        }
-        mSender = new UdpSender();
+    void initView() {
+        mInfoView = (TextView) findViewById(R.id.id_text);
+
+        mIpEditView = (IpEditView) findViewById(R.id.ip_addr);
+        mPortView = (EditText) findViewById(R.id.port);
+        connectButton = (Button) findViewById(R.id.id_connect);
+
+        mDataView = (EditText) findViewById(R.id.id_data);
+        sendButton = (Button) findViewById(R.id.button);
+
+        updateState();
 
         Button cleanButton = (Button) findViewById(R.id.button_clear);
-        cleanButton.setOnClickListener(new View.OnClickListener(){
+        cleanButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mInfo = new StringBuffer();
@@ -85,41 +74,35 @@ public class BroadcastSenderActivity extends Activity {
             }
         });
 
-        mLauncherButton.setOnClickListener(new View.OnClickListener(){
+        connectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mTarAddress = mIpEditView.getIpAddress();
-                String portString = mPortView.getText().toString();
-                mTarPort = -1;
-                if(portString != null && !portString.isEmpty()){
-                    try {
-                        Integer port = Integer.parseInt(portString);
-                        if(port< 0 || port > 65535) {
-                            Toast.makeText(BroadcastSenderActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
-                        }else{
-                            mTarPort= port;
-                        }
-                    }catch (NumberFormatException e){
-                        Toast.makeText(BroadcastSenderActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
-                    }
-                }else{
-                    Toast.makeText(BroadcastSenderActivity.this, "please input port", Toast.LENGTH_SHORT).show();
+                if (mClient != null && mClient.getStatus() == TcpClient.STATUS.connectted) {
+                    mHandler.sendEmptyMessage(MESSAGE_DISCONNECT);
+                } else {
+                    mHandler.sendEmptyMessage(MESSAGE_CONNECT);
                 }
-                String msg = mDataView.getText().toString();
-                mSender.sendUdp(msg);
-
             }
         });
 
-        mInfo = new StringBuffer();
-        mHandler.obtainMessage(MESSAGE_INIT).sendToTarget();
-        WifiManager manager = (WifiManager) this
-                .getSystemService(Context.WIFI_SERVICE);
+        sendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                String msg = mDataView.getText().toString();
+                if (mClient != null) {
+                    updateInfo("send>>" + msg);
+                    mClient.send(msg);
+                }
+            }
+        });
     }
 
     @Override
     protected void onStop() {
-        mHandler.obtainMessage(MESSAGE_CANCEL_LISTEN).sendToTarget();
+        if (mClient != null) {
+            mClient.disconnect();
+        }
         super.onStop();
     }
 
@@ -131,7 +114,6 @@ public class BroadcastSenderActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        mSender.close();
         super.onDestroy();
     }
 
@@ -149,26 +131,61 @@ public class BroadcastSenderActivity extends Activity {
         mInfoView.setText(mInfo);
     }
 
-    private void updateState(boolean listening){
-        mListening = listening;
-        if(mListening){
-            mStateView.setText(R.string.state_listening);
-            mPortView.setEnabled(false);
-            mLauncherButton.setText(R.string.state_stop);
-        }else{
-            mStateView.setText(R.string.state_stop);
+    private void uiUpdate() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updateState();
+            }
+        });
+    }
+
+    private void updateState() {
+        if (mClient == null) {
+            mIpEditView.setEnabled(true);
             mPortView.setEnabled(true);
-            mLauncherButton.setText(R.string.btn_start);
+            connectButton.setEnabled(true);
+            sendButton.setEnabled(false);
+            connectButton.setText("connect");
+            return;
+        }
+
+        switch (mClient.getStatus()) {
+            case init:
+                mIpEditView.setEnabled(true);
+                mPortView.setEnabled(true);
+                sendButton.setEnabled(false);
+                connectButton.setText("connect");
+                break;
+            case connecting:
+                mIpEditView.setEnabled(false);
+                mPortView.setEnabled(false);
+                sendButton.setEnabled(false);
+                connectButton.setText("disconnect");
+                break;
+            case connectted:
+                mIpEditView.setEnabled(false);
+                mPortView.setEnabled(false);
+                sendButton.setEnabled(true);
+                connectButton.setText("disconnect");
+                break;
+            case close:
+                mIpEditView.setEnabled(true);
+                mPortView.setEnabled(true);
+                sendButton.setEnabled(false);
+                connectButton.setText("connect");
+                break;
         }
     }
+
     private void initIp() {
         mInfoView.setText(mInfo);
         mInfo.append(mName + "\n");
         mInfo.append("\n");
-        mInfo.append("SN:"+mSN);
+        mInfo.append("SN:" + mSN);
         mInfo.append("\n");
 
-        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         if (!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
@@ -179,6 +196,32 @@ public class BroadcastSenderActivity extends Activity {
         updateInfo("local ip:" + ip);
     }
 
+    void doConnect() {
+        String address = mIpEditView.getIpAddress();
+        String portString = mPortView.getText().toString();
+        int tarPort = -1;
+        if (portString != null && !portString.isEmpty()) {
+            try {
+                Integer port = Integer.parseInt(portString);
+                if (port < 0 || port > 65535) {
+                    Toast.makeText(TcpSenderActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
+                } else {
+                    tarPort = port;
+                }
+            } catch (NumberFormatException e) {
+                Toast.makeText(TcpSenderActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(TcpSenderActivity.this, "please input port", Toast.LENGTH_SHORT).show();
+        }
+
+        if (tarPort >= 0) {
+            mClient = new TcpClient(address, tarPort);
+            mClient.setListener(new StatusListener());
+            mClient.connect();
+        }
+    }
+
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -187,18 +230,22 @@ public class BroadcastSenderActivity extends Activity {
                 case MESSAGE_INIT:
                     initIp();
                     break;
+                case MESSAGE_CONNECT:
+                    doConnect();
+                    break;
                 case MESSAGE_SEND_IP:
                     break;
                 case MESSAGE_REQUEST_IP:
                     break;
-                case MESSAGE_UPDATE_INFO:
-                {
+                case MESSAGE_UPDATE_INFO: {
                     String info = (String) msg.obj;
                     updateInfo(info);
                     break;
                 }
-                case MESSAGE_CREATE_SOCKET:
-
+                case MESSAGE_DISCONNECT:
+                    if (mClient != null) {
+                        mClient.disconnect();
+                    }
                     break;
                 default:
                     break;
@@ -213,78 +260,24 @@ public class BroadcastSenderActivity extends Activity {
         msg.sendToTarget();
     }
 
-    class UdpSender {
-        private HandlerThread mThread;
-        private Handler mHandler;
+    class StatusListener implements TcpClient.Listener {
 
-        final int MSG_SEND_UDP = 2;
-        final int MSG_SEND_BROADCAST = 3;
-
-        class MyHandler extends  Handler{
-            MyHandler(Looper looper){
-                super(looper);
-            }
-
-            @Override
-            public void handleMessage(Message msg) {
-                switch(msg.what) {
-                    case MSG_SEND_BROADCAST:
-                        broadcastInner((String)msg.obj);
-                        break;
-                }
-            }
-        }
-        UdpSender() {
-            mThread = new HandlerThread("send thread");
-            mThread.start();
-            mHandler = new MyHandler(mThread.getLooper());
+        @Override
+        public void onConnect() {
+            uiUpdate();
+            postUpdateInfo("Connect OK");
         }
 
-        public void close(){
-            mHandler.removeCallbacksAndMessages(null);
-            mThread.quitSafely();
+        @Override
+        public void onReceive(String msg) {
+            uiUpdate();
+            postUpdateInfo("receive<<" + msg);
         }
 
-        public void sendUdp(String data){
-            Message msg = mHandler.obtainMessage(MSG_SEND_BROADCAST);
-            msg.obj = data;
-            mHandler.sendMessage(msg);
-        }
-
-        private void broadcastInner(String info){
-            String msgStr;
-            if(info == null || info.isEmpty()){
-                msgStr = "123";
-            }else{
-                msgStr = info;
-            }
-            postUpdateInfo("broadcast->"+msgStr);
-            int server_port = mTarPort;
-            DatagramSocket s = null;
-            try {
-                s = new DatagramSocket();
-            } catch (SocketException e) {
-                e.printStackTrace();
-            }
-            InetAddress local = null;
-            try {
-                local = InetAddress.getByName(mTarAddress);
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            }
-            int msg_length = msgStr.length();
-            byte[] messageByte = msgStr.getBytes();
-            DatagramPacket p = new DatagramPacket(messageByte, msg_length, local,
-                    server_port);
-            try {
-
-                s.send(p);
-                s.close();
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        @Override
+        public void onClose() {
+            uiUpdate();
+            postUpdateInfo("Connect Close");
         }
     }
-
 }

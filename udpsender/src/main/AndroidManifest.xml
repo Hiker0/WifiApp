@@ -21,6 +21,9 @@
 
         <activity android:name=".BroadcastSenderTest">
         </activity>
+
+        <activity android:name=".TcpSenderActivity">
+        </activity>
     </application>
 
 </manifest>

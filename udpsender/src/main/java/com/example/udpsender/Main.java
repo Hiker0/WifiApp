@@ -18,9 +18,12 @@ public class Main extends Activity implements View.OnClickListener {
         Button groupButton = (Button) findViewById(R.id.btn_group);
         Button broadcastButton = (Button) findViewById(R.id.btn_broadcast);
         Button testButton = (Button) findViewById(R.id.btn_test);
+        Button tcpButton = (Button) findViewById(R.id.btn_tcp);
+
         groupButton.setOnClickListener(this);
         broadcastButton.setOnClickListener(this);
         testButton.setOnClickListener(this);
+        tcpButton.setOnClickListener(this);
     }
 
     @Override
@@ -53,6 +56,10 @@ public class Main extends Activity implements View.OnClickListener {
             startActivity(intent);
         }else if(id == R.id.btn_test){
             intent.setClass(this,BroadcastSenderTest.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }else if(id == R.id.btn_tcp){
+            intent.setClass(this,TcpSenderActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
         }
