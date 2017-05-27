@@ -68,7 +68,6 @@ public class TcpListenerActivity extends Activity {
     private SocketServerThread socketServerThread;
     WifiManager.MulticastLock mWifiLock;
 
-    @SuppressLint("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,7 +79,7 @@ public class TcpListenerActivity extends Activity {
 
         mInfo = new StringBuffer();
         mHandler.obtainMessage(MESSAGE_INIT).sendToTarget();
-        WifiManager manager = (WifiManager) this.getApplicationContext()
+        @SuppressLint("WrongConstant") WifiManager manager = (WifiManager) this.getApplicationContext()
                 .getSystemService(Context.WIFI_SERVICE);
         mWifiLock = manager.createMulticastLock("test wifi");
     }
@@ -90,6 +89,7 @@ public class TcpListenerActivity extends Activity {
     protected void onStop() {
         mWifiLock.release();
         mHandler.obtainMessage(MESSAGE_CANCEL_LISTEN).sendToTarget();
+        updateState(false);
         super.onStop();
     }
 
@@ -245,6 +245,7 @@ public class TcpListenerActivity extends Activity {
                             e.printStackTrace();
                         }
                     }
+
                     break;
                 }
                 case MESSAGE_REFRESH_LIST:
