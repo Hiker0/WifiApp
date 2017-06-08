@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <activity android:name=".discover.DiscoverActivity">
+        <activity android:name=".discover.DiscoverJmdnsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

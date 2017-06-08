@@ -12,7 +12,7 @@ import java.util.ArrayList;
  * Date  : 2017-06-06
  * last modified: 2017-06-06
  */
-public class DiscoverPresenter implements DiscoverContract.Presenter {
+public class NsdPresenter implements DiscoverContract.Presenter {
 
     private static final  String SERVICE_TYPE = "_tv._tcp.";
     private NsdManager.RegistrationListener mRegistrationListener;
@@ -23,7 +23,7 @@ public class DiscoverPresenter implements DiscoverContract.Presenter {
     private boolean isSearching = false;
     private ArrayList<NsdServiceInfo> mServices= null;
 
-    DiscoverPresenter(DiscoverContract.View view, NsdManager manager) {
+    NsdPresenter(DiscoverContract.View view, NsdManager manager) {
         mNsdManager = manager;
         mView = view;
         mServices = new ArrayList<NsdServiceInfo>();

@@ -2,6 +2,7 @@ package com.alllen.wifiapp.discover;
 
 import android.content.Context;
 import android.net.nsd.NsdManager;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -15,9 +16,9 @@ import com.alllen.wifiapp.R;
  * Date  : 2017-06-05
  * last modified: 2017-06-05
  */
-public class DiscoverActivity extends AppCompatActivity {
+public class DiscoverJmdnsActivity extends AppCompatActivity {
 
-    NsdPresenter mDiscoverPresenter;
+    JmdnsPresenter mDiscoverPresenter;
     WifiManager.MulticastLock mWifiLock;
 
     @Override
@@ -31,8 +32,17 @@ public class DiscoverActivity extends AppCompatActivity {
             discoverFragment = DiscoverFragment.newInstance();
             ActivityUtils.addFragmentToActivity(getSupportFragmentManager(), discoverFragment, R.id.layout_fragment_container);
         }
-        NsdManager nsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
-        mDiscoverPresenter = new NsdPresenter(discoverFragment, nsdManager);
+
+        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+
+        if (!wifiManager.isWifiEnabled()) {
+            wifiManager.setWifiEnabled(true);
+        }
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        int address = wifiInfo.getIpAddress();
+
+        String ip = intToIp(address);
+        mDiscoverPresenter = new JmdnsPresenter(discoverFragment,ip);
 
         WifiManager manager = (WifiManager) this
                 .getSystemService(Context.WIFI_SERVICE);
@@ -48,6 +58,13 @@ public class DiscoverActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
                         | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
                         | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+    }
+
+    private String intToIp(int i) {
+        return (i & 0xFF) + "." +
+                ((i >> 8) & 0xFF) + "." +
+                ((i >> 16) & 0xFF) + "." +
+                (i >> 24 & 0xFF);
     }
 
     @Override
