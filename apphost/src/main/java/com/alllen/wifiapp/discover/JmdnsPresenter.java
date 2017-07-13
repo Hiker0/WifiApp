@@ -22,7 +22,7 @@ import javax.jmdns.ServiceListener;
  */
 public class JmdnsPresenter implements DiscoverContract.Presenter {
 
-    private static final  String SERVICE_TYPE = "_tv._tcp.local.";
+    private static final  String SERVICE_TYPE = "_phibox._tcp.local.";
     private NsdManager.RegistrationListener mRegistrationListener;
     private ServiceListener mDiscoveryListener;
     private JmDNS mJmdns;
