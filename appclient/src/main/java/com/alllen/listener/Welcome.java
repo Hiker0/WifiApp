@@ -1,4 +1,4 @@
-package com.alllen.wifiapp;
+package com.alllen.listener;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;

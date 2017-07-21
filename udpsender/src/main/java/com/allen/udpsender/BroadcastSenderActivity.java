@@ -1,4 +1,4 @@
-package com.example.udpsender;
+package com.allen.udpsender;
 
 import android.app.Activity;
 import android.content.Context;
@@ -11,7 +11,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -19,6 +18,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alllen.mylibrary.IpEditView;
+import com.allen.udpsender.R;
 
 import java.io.IOException;
 import java.net.DatagramPacket;

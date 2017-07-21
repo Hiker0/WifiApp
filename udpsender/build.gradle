@@ -4,7 +4,7 @@ android {
     compileSdkVersion 23
     buildToolsVersion "25.0.2"
     defaultConfig {
-        applicationId "com.example.udpsender"
+        applicationId "com.allen.udpsender"
         minSdkVersion 19
         targetSdkVersion 25
         versionCode 1

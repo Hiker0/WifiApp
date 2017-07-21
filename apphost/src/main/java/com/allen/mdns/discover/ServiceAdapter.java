@@ -1,4 +1,4 @@
-package com.alllen.wifiapp.discover;
+package com.allen.mdns.discover;
 
 import android.net.nsd.NsdServiceInfo;
 import android.view.LayoutInflater;
@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-import com.alllen.wifiapp.R;
+import com.allen.mdns.R;
 
 import java.util.ArrayList;
 

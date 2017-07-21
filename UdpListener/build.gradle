@@ -4,7 +4,7 @@ android {
     compileSdkVersion 23
     buildToolsVersion "25.0.0"
     defaultConfig {
-        applicationId "com.alllen.wifiapp"
+        applicationId "com.allen.listener"
         minSdkVersion 19
         targetSdkVersion 23
         versionCode 1

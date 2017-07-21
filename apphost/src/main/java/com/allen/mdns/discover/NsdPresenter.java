@@ -1,9 +1,7 @@
-package com.alllen.wifiapp.discover;
+package com.allen.mdns.discover;
 
-import android.content.Context;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
-import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -14,7 +12,7 @@ import java.util.ArrayList;
  */
 public class NsdPresenter implements DiscoverContract.Presenter {
 
-    private static final  String SERVICE_TYPE = "_tv._tcp.";
+    private static final  String SERVICE_TYPE = "_phibox._tcp.";
     private NsdManager.RegistrationListener mRegistrationListener;
     private NsdManager.DiscoveryListener mDiscoveryListener;
     private NsdManager mNsdManager;

@@ -1,10 +1,8 @@
-package com.alllen.wifiapp.discover;
+package com.allen.mdns.discover;
 
 import android.support.v4.app.Fragment;
-import android.net.nsd.NsdServiceInfo;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,10 +10,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.alllen.wifiapp.R;
-
-import java.util.ArrayList;
-import java.util.zip.Inflater;
+import com.allen.mdns.R;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;

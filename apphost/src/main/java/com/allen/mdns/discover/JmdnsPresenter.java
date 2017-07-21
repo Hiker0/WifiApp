@@ -1,4 +1,4 @@
-package com.alllen.wifiapp.discover;
+package com.allen.mdns.discover;
 
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;

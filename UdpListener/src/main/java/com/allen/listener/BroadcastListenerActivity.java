@@ -1,43 +1,30 @@
-package com.example.udpsender;
+package com.allen.listener;
 
 import android.app.Activity;
 import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.nfc.FormatException;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.PowerManager;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.alllen.mylibrary.IpEditView;
+import com.allen.listener.R;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.DatagramSocket;
+import java.net.SocketException;
 
 ;
 
-public class GroupSenderActivity extends Activity {
+public class BroadcastListenerActivity extends Activity {
     static final String TAG = "ActivityListener";
 
     private String mName = Build.DEVICE;
@@ -45,10 +32,8 @@ public class GroupSenderActivity extends Activity {
 
     private TextView mInfoView;
     private TextView mStateView;
-    private IpEditView mIpEditView;
     private EditText  mPortView;
     private Button mLauncherButton;
-    private Button mClearButton;
 
     private boolean mListening = false;
     private String mTarAddress = null;
@@ -68,30 +53,25 @@ public class GroupSenderActivity extends Activity {
     static final int MESSAGE_CANCEL_LISTEN = 6;
     static final int MESSAGE_CREATE_SOCKET = 7;
 
-    private GroupAcceptThread mGroupAcceptThread;
-    private WifiManager.MulticastLock mWifiLock;
-    private PowerManager.WakeLock mWakeLock;
-    private Spinner mSpinner;
+
+    private BroadcastAcceptThread mBroadcastAcceptThread;
+    WifiManager.MulticastLock mWifiLock;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_sender);
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        mWakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "My Tag");
+        setContentView(R.layout.activity_listener);
 
         mInfoView = (TextView) findViewById(R.id.id_text);
-        mIpEditView = (IpEditView) findViewById(R.id.ip_addr);
-        try {
-            mIpEditView.setIpAddress(GROUP_DEFAULT_ADDR);
-        }catch (FormatException e){
-
-        }
         mPortView= (EditText) findViewById(R.id.port);
-        mPortView.setText(Integer.toString(GROUP_DEFAULT_PORT));
         mStateView = (TextView) findViewById(R.id.id_state);
-        mClearButton = (Button) findViewById(R.id.button_clear);
-        mClearButton.setOnClickListener(new View.OnClickListener(){
+        mLauncherButton = (Button) findViewById(R.id.button);
+        View ipgroup = findViewById(R.id.ip_group);
+        ipgroup.setVisibility(View.GONE);
+
+
+        Button cleanButton = (Button) findViewById(R.id.button_clear);
+        cleanButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 mInfo = new StringBuffer();
@@ -99,31 +79,29 @@ public class GroupSenderActivity extends Activity {
             }
         });
 
-        mLauncherButton = (Button) findViewById(R.id.button);
         mLauncherButton.setOnClickListener(new View.OnClickListener(){
-
             @Override
             public void onClick(View v) {
                 if(mListening){
                     mHandler.sendEmptyMessage(MESSAGE_CANCEL_LISTEN);
                     updateState(false);
                 }else{
-                    mTarAddress = mIpEditView.getIpAddress();
+
                     String portString = mPortView.getText().toString();
                     mTarPort = -1;
                     if(portString != null && !portString.isEmpty()){
                         try {
                             Integer port = Integer.parseInt(portString);
                             if(port< 0 || port > 65535) {
-                                Toast.makeText(GroupSenderActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(BroadcastListenerActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
                             }else{
                                 mTarPort= port;
                             }
                         }catch (NumberFormatException e){
-                            Toast.makeText(GroupSenderActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(BroadcastListenerActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
                         }
                     }else{
-                        Toast.makeText(GroupSenderActivity.this, "please input port", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(BroadcastListenerActivity.this, "please input port", Toast.LENGTH_SHORT).show();
                     }
 
                     if(mTarPort>0 && mTarPort < 65535){
@@ -144,7 +122,6 @@ public class GroupSenderActivity extends Activity {
     @Override
     protected void onStop() {
         mWifiLock.release();
-        mWakeLock.release();
         mHandler.obtainMessage(MESSAGE_CANCEL_LISTEN).sendToTarget();
         super.onStop();
     }
@@ -153,7 +130,6 @@ public class GroupSenderActivity extends Activity {
     protected void onStart() {
         super.onStart();
         mWifiLock.acquire();
-        mWakeLock.acquire();
     }
 
 
@@ -180,12 +156,10 @@ public class GroupSenderActivity extends Activity {
         mListening = listening;
         if(mListening){
             mStateView.setText(R.string.state_listening);
-            mIpEditView.setEnabled(false);
             mPortView.setEnabled(false);
             mLauncherButton.setText(R.string.state_stop);
         }else{
             mStateView.setText(R.string.state_stop);
-            mIpEditView.setEnabled(true);
             mPortView.setEnabled(true);
             mLauncherButton.setText(R.string.btn_start);
         }
@@ -222,8 +196,8 @@ public class GroupSenderActivity extends Activity {
                     break;
                 case MESSAGE_LISTEN:
                 {
-                    mGroupAcceptThread = new GroupAcceptThread(mTarAddress, mTarPort);
-                    mGroupAcceptThread.start();
+                    mBroadcastAcceptThread = new BroadcastAcceptThread(mTarPort);
+                    mBroadcastAcceptThread.start();
                     break;
                 }
                 case MESSAGE_UPDATE_INFO:
@@ -233,8 +207,8 @@ public class GroupSenderActivity extends Activity {
                     break;
                 }
                 case MESSAGE_CANCEL_LISTEN:
-                    if (mGroupAcceptThread != null) {
-                        mGroupAcceptThread.cancel();
+                    if(mBroadcastAcceptThread != null){
+                        mBroadcastAcceptThread.cancel();
                     }
                     break;
                 case MESSAGE_CREATE_SOCKET:
@@ -253,111 +227,53 @@ public class GroupSenderActivity extends Activity {
         msg.sendToTarget();
     }
 
-    class GroupAcceptThread extends Thread {
-        String mAddr;
+    class BroadcastAcceptThread extends Thread {
         int mPort;
         boolean mRunning = true;
-        InetAddress receiveAddress;
-        MulticastSocket mMulticastSocket;
+        DatagramSocket datagramSocket;
 
-        GroupAcceptThread(String addr, int port) {
-            mAddr = addr;
+        BroadcastAcceptThread(int port) {
             mPort = port;
-            mRunning = true;
+
             try {
-                mMulticastSocket = new MulticastSocket(mPort);
-                receiveAddress = InetAddress.getByName(mAddr);
-                mMulticastSocket.joinGroup(receiveAddress);
-            } catch (Exception e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-                Log.e(TAG, "mMulticastSocket fail");
-                mRunning = false;
+                datagramSocket = new DatagramSocket(mPort);
+                datagramSocket.setBroadcast(true);
+            } catch (SocketException e) {
+                e.printStackTrace();
+                Log.d(TAG, "Broadcast DatagramSocket fail" );
             }
         }
 
         @Override
         public void run() {
-            postUpdateInfo("tar:"+mTarAddress+"::"+mTarPort);
-            if(mRunning) {
-                postUpdateInfo("group begin listening");
-            }
-            byte buf[] = new byte[1024];
-            DatagramPacket dp = new DatagramPacket(buf, 1024);
-            while (mRunning) {
-                try {
-                    mMulticastSocket.receive(dp);
-                    String data = new String(buf, 0, dp.getLength());
-//                    DNSIncoming in = new DNSIncoming(dp);
-//                    Log.d(TAG, "group receive:" + data);
-                    postUpdateInfo("********** group receive *************\n");
-                    //postUpdateInfo(in.toString());
-                    postUpdateInfo(data);
+            postUpdateInfo("Start Listenning port=" + mPort);
+            byte[] message = new byte[512];
 
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Log.e(TAG, "group receive fail");
-                }
+            DatagramPacket datagramPacket = new DatagramPacket(message,
+                    message.length);
+            if(datagramSocket == null){
+                mRunning = false;
             }
+
+            try {
+                while (mRunning) {
+                    datagramSocket.receive(datagramPacket);
+                    String strMsg = new String(datagramPacket.getData()).trim();
+                    Log.d(TAG, "Broadcast receive:" + datagramPacket.getAddress().getHostAddress() + datagramPacket.getPort() + strMsg);
+                    postUpdateInfo("Broadcast receive:[" + datagramPacket.getAddress().getHostAddress()+"][" + datagramPacket.getPort() +"] "+ strMsg);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            postUpdateInfo("Listenning end");
         }
 
         public void cancel() {
-            postUpdateInfo("group cancel listening");
-            if(mMulticastSocket != null) {
-                try {
-                    mMulticastSocket.leaveGroup(receiveAddress);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                if (!mMulticastSocket.isClosed()) {
-                    mMulticastSocket.close();
-                }
+            if(datagramSocket != null && !datagramSocket.isClosed()){
+                datagramSocket.close();
             }
+            postUpdateInfo("Broadcast cancel listening");
             mRunning = false;
-        }
-    }
-
-    public class SocketThread extends Thread {
-        Socket socket;
-        BufferedWriter bw;
-        BufferedReader br;
-
-        public SocketThread(Socket s) {
-            this.socket = s;
-            try {
-                bw = new BufferedWriter(new OutputStreamWriter(
-                        socket.getOutputStream(), "utf-8"));
-                br = new BufferedReader(new InputStreamReader(
-                        socket.getInputStream(), "utf-8"));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public void out(String out) {
-            try {
-                bw.write(out + "\n");
-                bw.flush();
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        public void run() {
-            try {
-                String line = null;
-                while ((line = br.readLine()) != null) {
-                    System.out.println("客户端发来数据："+line);
-                }
-                br.close();
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 

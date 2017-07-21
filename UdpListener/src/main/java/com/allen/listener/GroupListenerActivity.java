@@ -1,48 +1,60 @@
-package com.alllen.wifiapp;
+package com.allen.listener;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.nfc.FormatException;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.allen.listener.R;
+import com.alllen.mylibrary.IpEditView;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketException;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
+import java.util.ArrayList;
+import java.util.List;
 
-;import static android.content.Context.WIFI_SERVICE;
-import static android.view.View.*;
-import static android.widget.Toast.LENGTH_SHORT;
+;import javax.jmdns.impl.DNSIncoming;
 
-public class UdpEchoActivity extends Activity {
+public class GroupListenerActivity extends Activity {
     static final String TAG = "ActivityListener";
 
     private String mName = Build.DEVICE;
     private String mSN = Build.SERIAL;
 
-    private Context mContext;
     private TextView mInfoView;
     private TextView mStateView;
+    private IpEditView mIpEditView;
     private EditText  mPortView;
     private Button mLauncherButton;
+    private Button mClearButton;
 
     private boolean mListening = false;
     private String mTarAddress = null;
     private int mTarPort = 0;
     private StringBuffer mInfo = null;
-    private int mCount = 0;
+
+
+    static final String GROUP_DEFAULT_ADDR = "224.0.0.251";
+    static final int GROUP_DEFAULT_PORT = 5353;
+
 
     static final int MESSAGE_INIT = 1;
     static final int MESSAGE_LISTEN = 2;
@@ -51,11 +63,11 @@ public class UdpEchoActivity extends Activity {
     static final int MESSAGE_UPDATE_INFO = 5;
     static final int MESSAGE_CANCEL_LISTEN = 6;
     static final int MESSAGE_CREATE_SOCKET = 7;
-    static final int MESSAGE_UPDATE_NUM = 8;
 
-
-    private BroadcastAcceptThread mBroadcastAcceptThread;
-    WifiManager.MulticastLock mWifiLock;
+    private GroupAcceptThread mGroupAcceptThread;
+    private WifiManager.MulticastLock mWifiLock;
+    private PowerManager.WakeLock mWakeLock;
+    private Spinner mSpinner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,16 +79,21 @@ public class UdpEchoActivity extends Activity {
                         |WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_listener);
+        @SuppressLint("WrongConstant") PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+        mWakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "My Tag");
 
         mInfoView = (TextView) findViewById(R.id.id_text);
-        mPortView= (EditText) findViewById(R.id.port);
-        mStateView = (TextView) findViewById(R.id.id_state);
-        mLauncherButton = (Button) findViewById(R.id.button);
-        View ipgroup = findViewById(R.id.ip_group);
-        ipgroup.setVisibility(View.GONE);
+        mIpEditView = (IpEditView) findViewById(R.id.ip_addr);
+        try {
+            mIpEditView.setIpAddress(GROUP_DEFAULT_ADDR);
+        }catch (FormatException e){
 
-        Button cleanButton = (Button) findViewById(R.id.button_clear);
-        cleanButton.setOnClickListener(new OnClickListener(){
+        }
+        mPortView= (EditText) findViewById(R.id.port);
+        mPortView.setText(Integer.toString(GROUP_DEFAULT_PORT));
+        mStateView = (TextView) findViewById(R.id.id_state);
+        mClearButton = (Button) findViewById(R.id.button_clear);
+        mClearButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 mInfo = new StringBuffer();
@@ -84,7 +101,9 @@ public class UdpEchoActivity extends Activity {
             }
         });
 
-        mLauncherButton.setOnClickListener(new OnClickListener(){
+        mLauncherButton = (Button) findViewById(R.id.button);
+        mLauncherButton.setOnClickListener(new View.OnClickListener(){
+
             @SuppressLint("WrongConstant")
             @Override
             public void onClick(View v) {
@@ -92,22 +111,22 @@ public class UdpEchoActivity extends Activity {
                     mHandler.sendEmptyMessage(MESSAGE_CANCEL_LISTEN);
                     updateState(false);
                 }else{
-
+                    mTarAddress = mIpEditView.getIpAddress();
                     String portString = mPortView.getText().toString();
                     mTarPort = -1;
                     if(portString != null && !portString.isEmpty()){
                         try {
                             Integer port = Integer.parseInt(portString);
                             if(port< 0 || port > 65535) {
-                                Toast.makeText(mContext, "please input correct port", LENGTH_SHORT).show();
+                                Toast.makeText(GroupListenerActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
                             }else{
                                 mTarPort= port;
                             }
                         }catch (NumberFormatException e){
-                            Toast.makeText(mContext, "please input correct port", LENGTH_SHORT).show();
+                            Toast.makeText(GroupListenerActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
                         }
                     }else{
-                        Toast.makeText(mContext, "please input port", LENGTH_SHORT).show();
+                        Toast.makeText(GroupListenerActivity.this, "please input port", Toast.LENGTH_SHORT).show();
                     }
 
                     if(mTarPort>0 && mTarPort < 65535){
@@ -120,14 +139,37 @@ public class UdpEchoActivity extends Activity {
 
         mInfo = new StringBuffer();
         mHandler.obtainMessage(MESSAGE_INIT).sendToTarget();
-        @SuppressLint("WrongConstant") WifiManager manager = (WifiManager) this.getApplicationContext()
+        @SuppressLint("WrongConstant") WifiManager manager = (WifiManager) getApplicationContext()
                 .getSystemService(WIFI_SERVICE);
         mWifiLock = manager.createMulticastLock("test wifi");
+    }
+    void iniSpinner(){
+
+        List<String> list = new ArrayList<String>();
+        list.add("PhiUdp");
+        list.add("PhiUdp");
+        list.add("PhiUdp");
+
+        ArrayAdapter<String> adapter=new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item,list);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mSpinner = (Spinner) findViewById(R.id.spinner1);
+        mSpinner.setAdapter(adapter);
+        mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view,
+                                       int position, long id) {
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // TODO Auto-generated method stub
+            }
+        });
     }
 
     @Override
     protected void onStop() {
         mWifiLock.release();
+        mWakeLock.release();
         mHandler.obtainMessage(MESSAGE_CANCEL_LISTEN).sendToTarget();
         super.onStop();
     }
@@ -136,6 +178,7 @@ public class UdpEchoActivity extends Activity {
     protected void onStart() {
         super.onStart();
         mWifiLock.acquire();
+        mWakeLock.acquire();
     }
 
 
@@ -152,41 +195,26 @@ public class UdpEchoActivity extends Activity {
     }
 
 
-
-    private void postUpdateInfo(String info) {
-        Message msg = mHandler.obtainMessage(MESSAGE_UPDATE_INFO);
-        msg.obj = info;
-        msg.sendToTarget();
-    }
-
-    private void postUpdateNum() {
-        mHandler.sendEmptyMessage(MESSAGE_UPDATE_NUM);
-    }
-
-    private void updateNum() {
-        mInfoView.setText(mInfo+ ":"+mCount);
-    }
-
     private void updateInfo(String line) {
         mInfo.append(line);
         mInfo.append("\n");
-        mInfoView.setText(mInfo+ ":"+mCount);
+        mInfoView.setText(mInfo);
     }
 
     private void updateState(boolean listening){
         mListening = listening;
         if(mListening){
             mStateView.setText(R.string.state_listening);
+            mIpEditView.setEnabled(false);
             mPortView.setEnabled(false);
             mLauncherButton.setText(R.string.state_stop);
         }else{
             mStateView.setText(R.string.state_stop);
+            mIpEditView.setEnabled(true);
             mPortView.setEnabled(true);
             mLauncherButton.setText(R.string.btn_start);
         }
     }
-
-    @SuppressLint("WrongConstant")
     private void initIp() {
         mInfoView.setText(mInfo);
         mInfo.append(mName + "\n");
@@ -194,8 +222,7 @@ public class UdpEchoActivity extends Activity {
         mInfo.append("SN:"+mSN);
         mInfo.append("\n");
 
-        WifiManager wifiManager;
-        wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        @SuppressLint("WrongConstant") WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
 
         if (!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
@@ -220,9 +247,8 @@ public class UdpEchoActivity extends Activity {
                     break;
                 case MESSAGE_LISTEN:
                 {
-                    mCount = 0;
-                    mBroadcastAcceptThread = new BroadcastAcceptThread(mTarPort);
-                    mBroadcastAcceptThread.start();
+                    mGroupAcceptThread = new GroupAcceptThread(mTarAddress, mTarPort);
+                    mGroupAcceptThread.start();
                     break;
                 }
                 case MESSAGE_UPDATE_INFO:
@@ -232,74 +258,100 @@ public class UdpEchoActivity extends Activity {
                     break;
                 }
                 case MESSAGE_CANCEL_LISTEN:
-                    if(mBroadcastAcceptThread != null){
-                        mBroadcastAcceptThread.cancel();
+                    if (mGroupAcceptThread != null) {
+                        mGroupAcceptThread.cancel();
                     }
                     break;
                 case MESSAGE_CREATE_SOCKET:
 
                     break;
-                case MESSAGE_UPDATE_NUM:
-                {
-                    updateNum();
-                    break;
-                }
                 default:
                     break;
             }
         }
     };
 
-    class BroadcastAcceptThread extends Thread {
+
+    private void postUpdateInfo(String info) {
+        Message msg = mHandler.obtainMessage(MESSAGE_UPDATE_INFO);
+        msg.obj = info;
+        msg.sendToTarget();
+    }
+
+    class GroupAcceptThread extends Thread {
+        String mAddr;
         int mPort;
         boolean mRunning = true;
-        DatagramSocket datagramSocket;
+        InetAddress receiveAddress;
+        MulticastSocket mMulticastSocket;
 
-        BroadcastAcceptThread(int port) {
+        GroupAcceptThread(String addr, int port) {
+            mAddr = addr;
             mPort = port;
-
+            mRunning = true;
             try {
-                datagramSocket = new DatagramSocket(mPort);
-                datagramSocket.setBroadcast(true);
-            } catch (SocketException e) {
-                e.printStackTrace();
-                Log.d(TAG, "Broadcast DatagramSocket fail" );
+                mMulticastSocket = new MulticastSocket(mPort);
+                receiveAddress = InetAddress.getByName(mAddr);
+                mMulticastSocket.joinGroup(receiveAddress);
+            } catch (Exception e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+                Log.e(TAG, "mMulticastSocket fail");
+                mRunning = false;
             }
         }
 
         @Override
         public void run() {
-            postUpdateInfo("Start Listenning port=" + mPort);
-            byte[] message = new byte[512];
-
-            DatagramPacket datagramPacket = new DatagramPacket(message,
-                    message.length);
-            if(datagramSocket == null){
-                mRunning = false;
+            postUpdateInfo("tar:"+mTarAddress+"::"+mTarPort);
+            if(mRunning) {
+                postUpdateInfo("group begin listening");
             }
-
-            try {
-                while (mRunning) {
-                    datagramSocket.receive(datagramPacket);
-                    String strMsg = new String(datagramPacket.getData()).trim();
-                    if(strMsg.equals("test")){
-                        mCount ++;
-                        postUpdateNum();
-                    }
+            byte buf[] = new byte[1024];
+            DatagramPacket dp = new DatagramPacket(buf, 1024);
+            while (mRunning) {
+                try {
+                    mMulticastSocket.receive(dp);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.e(TAG, "group receive fail");
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
 
+                DNSIncoming in = null;
+                try {
+
+
+                    in = new DNSIncoming(dp);
+                    Log.d(TAG, "group receive:" + in);
+                    postUpdateInfo("********** group receive *************\n");
+                    postUpdateInfo(in.toString());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    String data = new String(buf, 0, dp.getLength());
+                    Log.d(TAG, "group receive:" + data);
+                    postUpdateInfo(data);
+                }
+
+            }
+            postUpdateInfo("Listenning end");
         }
 
         public void cancel() {
-            if(datagramSocket != null && !datagramSocket.isClosed()){
-                datagramSocket.close();
+            postUpdateInfo("group cancel listening");
+            if(mMulticastSocket != null) {
+                try {
+                    mMulticastSocket.leaveGroup(receiveAddress);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if (!mMulticastSocket.isClosed()) {
+                    mMulticastSocket.close();
+                }
             }
-            postUpdateInfo("Broadcast cancel listening");
             mRunning = false;
         }
     }
+
+
 
 }

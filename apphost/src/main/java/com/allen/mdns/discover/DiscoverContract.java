@@ -1,4 +1,4 @@
-package com.alllen.wifiapp.discover;
+package com.allen.mdns.discover;
 
 import android.net.nsd.NsdServiceInfo;
 
@@ -6,7 +6,6 @@ import com.alllen.mylibrary.mvp.BasePresenter;
 import com.alllen.mylibrary.mvp.BaseView;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Author: allen.z

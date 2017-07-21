@@ -1,9 +1,8 @@
-package com.alllen.wifiapp;
+package com.allen.listener;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.Entity;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -20,6 +19,8 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.allen.listener.R;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

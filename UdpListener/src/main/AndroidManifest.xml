@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.alllen.wifiapp">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.allen.listener">
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"></uses-permission>
@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <application android:allowBackup="true" android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name" android:supportsRtl="true" android:theme="@style/AppTheme">
-        <activity android:name=".Main">
+        <activity android:name="com.allen.listener.Main">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -16,16 +16,16 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".GroupListenerActivity">
+        <activity android:name="com.allen.listener.GroupListenerActivity">
         </activity>
 
-        <activity android:name=".BroadcastListenerActivity">
+        <activity android:name="com.allen.listener.BroadcastListenerActivity">
         </activity>
 
-        <activity android:name=".TcpListenerActivity">
+        <activity android:name="com.allen.listener.TcpListenerActivity">
         </activity>
 
-        <activity android:name=".UdpEchoActivity">
+        <activity android:name="com.allen.listener.UdpEchoActivity">
         </activity>
     </application>
 
