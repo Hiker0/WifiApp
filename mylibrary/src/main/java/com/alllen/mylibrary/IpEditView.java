@@ -89,6 +89,14 @@ public class IpEditView extends LinearLayout {
         return ip;
     }
 
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        for(View view:mIPs){
+            view.setEnabled(enabled);
+        }
+    }
+
     public void setIpAddress(String ipaddress) throws FormatException {
         String[] ips = ipaddress.split("\\"+mSplit);
         if(ips.length != 4){
@@ -117,7 +125,7 @@ public class IpEditView extends LinearLayout {
     }
    public String getIpAddress( ){
 
-        StringBuilder sb = new StringBuilder();
+       StringBuilder sb = new StringBuilder();
        String defaultIp = getResources().getString(R.string.default_ip);
        int ip;
        for(int i=0; i<4;i++){

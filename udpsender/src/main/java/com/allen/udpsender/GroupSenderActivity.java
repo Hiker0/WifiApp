@@ -142,7 +142,7 @@ public class GroupSenderActivity extends Activity {
                     return;
                 }
                 String msg = mDataView.getText().toString();
-                mGroupSender.sendGroupBroadcast(mTarAddress, mTarPort,msg );
+                mGroupSender.sendGroupBroadcast(mTarAddress, mTarPort, msg);
             }
         });
 
