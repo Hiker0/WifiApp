@@ -42,7 +42,7 @@ public class GroupListenerActivity extends Activity {
     private TextView mInfoView;
     private TextView mStateView;
     private IpEditView mIpEditView;
-    private EditText  mPortView;
+    private EditText mPortView;
     private Button mLauncherButton;
     private Button mClearButton;
 
@@ -72,11 +72,11 @@ public class GroupListenerActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                        |WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-                        |WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON,
+                        | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                        | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON,
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                        |WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-                        |WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+                        | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                        | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_listener);
         @SuppressLint("WrongConstant") PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
@@ -86,14 +86,14 @@ public class GroupListenerActivity extends Activity {
         mIpEditView = (IpEditView) findViewById(R.id.ip_addr);
         try {
             mIpEditView.setIpAddress(GROUP_DEFAULT_ADDR);
-        }catch (FormatException e){
+        } catch (FormatException e) {
 
         }
-        mPortView= (EditText) findViewById(R.id.port);
+        mPortView = (EditText) findViewById(R.id.port);
         mPortView.setText(Integer.toString(GROUP_DEFAULT_PORT));
         mStateView = (TextView) findViewById(R.id.id_state);
         mClearButton = (Button) findViewById(R.id.button_clear);
-        mClearButton.setOnClickListener(new View.OnClickListener(){
+        mClearButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mInfo = new StringBuffer();
@@ -102,34 +102,34 @@ public class GroupListenerActivity extends Activity {
         });
 
         mLauncherButton = (Button) findViewById(R.id.button);
-        mLauncherButton.setOnClickListener(new View.OnClickListener(){
+        mLauncherButton.setOnClickListener(new View.OnClickListener() {
 
             @SuppressLint("WrongConstant")
             @Override
             public void onClick(View v) {
-                if(mListening){
+                if (mListening) {
                     mHandler.sendEmptyMessage(MESSAGE_CANCEL_LISTEN);
                     updateState(false);
-                }else{
+                } else {
                     mTarAddress = mIpEditView.getIpAddress();
                     String portString = mPortView.getText().toString();
                     mTarPort = -1;
-                    if(portString != null && !portString.isEmpty()){
+                    if (portString != null && !portString.isEmpty()) {
                         try {
                             Integer port = Integer.parseInt(portString);
-                            if(port< 0 || port > 65535) {
+                            if (port < 0 || port > 65535) {
                                 Toast.makeText(GroupListenerActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
-                            }else{
-                                mTarPort= port;
+                            } else {
+                                mTarPort = port;
                             }
-                        }catch (NumberFormatException e){
+                        } catch (NumberFormatException e) {
                             Toast.makeText(GroupListenerActivity.this, "please input correct port", Toast.LENGTH_SHORT).show();
                         }
-                    }else{
+                    } else {
                         Toast.makeText(GroupListenerActivity.this, "please input port", Toast.LENGTH_SHORT).show();
                     }
 
-                    if(mTarPort>0 && mTarPort < 65535){
+                    if (mTarPort > 0 && mTarPort < 65535) {
                         mHandler.sendEmptyMessage(MESSAGE_LISTEN);
                         updateState(true);
                     }
@@ -143,14 +143,15 @@ public class GroupListenerActivity extends Activity {
                 .getSystemService(WIFI_SERVICE);
         mWifiLock = manager.createMulticastLock("test wifi");
     }
-    void iniSpinner(){
+
+    void iniSpinner() {
 
         List<String> list = new ArrayList<String>();
         list.add("PhiUdp");
         list.add("PhiUdp");
         list.add("PhiUdp");
 
-        ArrayAdapter<String> adapter=new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item,list);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, list);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mSpinner = (Spinner) findViewById(R.id.spinner1);
         mSpinner.setAdapter(adapter);
@@ -159,6 +160,7 @@ public class GroupListenerActivity extends Activity {
             public void onItemSelected(AdapterView<?> parent, View view,
                                        int position, long id) {
             }
+
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 // TODO Auto-generated method stub
@@ -201,25 +203,26 @@ public class GroupListenerActivity extends Activity {
         mInfoView.setText(mInfo);
     }
 
-    private void updateState(boolean listening){
+    private void updateState(boolean listening) {
         mListening = listening;
-        if(mListening){
+        if (mListening) {
             mStateView.setText(R.string.state_listening);
             mIpEditView.setEnabled(false);
             mPortView.setEnabled(false);
             mLauncherButton.setText(R.string.state_stop);
-        }else{
+        } else {
             mStateView.setText(R.string.state_stop);
             mIpEditView.setEnabled(true);
             mPortView.setEnabled(true);
             mLauncherButton.setText(R.string.btn_start);
         }
     }
+
     private void initIp() {
         mInfoView.setText(mInfo);
         mInfo.append(mName + "\n");
         mInfo.append("\n");
-        mInfo.append("SN:"+mSN);
+        mInfo.append("SN:" + mSN);
         mInfo.append("\n");
 
         @SuppressLint("WrongConstant") WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
@@ -245,14 +248,12 @@ public class GroupListenerActivity extends Activity {
                     break;
                 case MESSAGE_REQUEST_IP:
                     break;
-                case MESSAGE_LISTEN:
-                {
+                case MESSAGE_LISTEN: {
                     mGroupAcceptThread = new GroupAcceptThread(mTarAddress, mTarPort);
                     mGroupAcceptThread.start();
                     break;
                 }
-                case MESSAGE_UPDATE_INFO:
-                {
+                case MESSAGE_UPDATE_INFO: {
                     String info = (String) msg.obj;
                     updateInfo(info);
                     break;
@@ -303,8 +304,8 @@ public class GroupListenerActivity extends Activity {
 
         @Override
         public void run() {
-            postUpdateInfo("tar:"+mTarAddress+"::"+mTarPort);
-            if(mRunning) {
+            postUpdateInfo("tar:" + mTarAddress + "::" + mTarPort);
+            if (mRunning) {
                 postUpdateInfo("group begin listening");
             }
             byte buf[] = new byte[1024];
@@ -319,17 +320,16 @@ public class GroupListenerActivity extends Activity {
 
                 DNSIncoming in = null;
                 try {
-
-
                     in = new DNSIncoming(dp);
                     Log.d(TAG, "group receive:" + in);
-                    postUpdateInfo("********** group receive *************\n");
+                    postUpdateInfo("--------Receive DNS--------\n");
                     postUpdateInfo(in.toString());
                 } catch (IOException e) {
                     e.printStackTrace();
                     String data = new String(buf, 0, dp.getLength());
-                    Log.d(TAG, "group receive:" + data);
-                    postUpdateInfo(data);
+                    Log.d(TAG, "<<< " + data);
+                    postUpdateInfo("--------Receive String--------\n");
+                    postUpdateInfo("[" + dp.getAddress() + ":" + dp.getPort() + "] <<< " + data);
                 }
 
             }
@@ -338,7 +338,7 @@ public class GroupListenerActivity extends Activity {
 
         public void cancel() {
             postUpdateInfo("group cancel listening");
-            if(mMulticastSocket != null) {
+            if (mMulticastSocket != null) {
                 try {
                     mMulticastSocket.leaveGroup(receiveAddress);
                 } catch (Exception e) {
@@ -351,7 +351,6 @@ public class GroupListenerActivity extends Activity {
             mRunning = false;
         }
     }
-
 
 
 }
