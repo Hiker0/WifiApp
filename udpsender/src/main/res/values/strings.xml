@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">UdpSender</string>
+    <string name="app_name">Socket Sender</string>
     <string name="state_stop">stop</string>
     <string name="state_listening">listening</string>
     <string name="btn_start">Start Listening</string>
