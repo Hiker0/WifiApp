@@ -3,6 +3,8 @@ package com.allen.mdns.discover;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 
+import com.allen.mdns.Welcome;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -22,8 +24,6 @@ import javax.jmdns.ServiceListener;
  */
 public class JmdnsPresenter implements DiscoverContract.Presenter {
 
-    private static final  String SERVICE_TYPE = "_phibox._tcp.local.";
-    private NsdManager.RegistrationListener mRegistrationListener;
     private ServiceListener mDiscoveryListener;
     private JmDNS mJmdns;
     private String mServiceName;
@@ -32,11 +32,23 @@ public class JmdnsPresenter implements DiscoverContract.Presenter {
     private ArrayList<NsdServiceInfo> mServices= null;
     private ExecutorService mExecutor;
     private InetAddress mIpAddress;
+    private  String mType = null;
+
     JmdnsPresenter(DiscoverContract.View view, String ip) {
+        this(view,ip, Welcome.DEFAULT_TYPE);
+    }
+    JmdnsPresenter(DiscoverContract.View view, String ip, String type) {
 
         mView = view;
         mServices = new ArrayList<NsdServiceInfo>();
         mView.setPresenter(this);
+        if(type != null){
+            mType = type;
+        }else{
+            mType = Welcome.DEFAULT_TYPE;
+        }
+        mType = mType+"local.";
+
         mExecutor = Executors.newSingleThreadExecutor();
         try {
             mIpAddress = InetAddress.getByName(ip);
@@ -64,7 +76,7 @@ public class JmdnsPresenter implements DiscoverContract.Presenter {
                     mView.updateInfo("JmDNS create fail");
                 }
 
-                registerService("phicomm", SERVICE_TYPE, 10379);
+                registerService("phicomm", mType, 10379);
 
             }
         });
@@ -73,7 +85,7 @@ public class JmdnsPresenter implements DiscoverContract.Presenter {
     @Override
     public void stop() {
         if (isSearching) {
-            mJmdns.removeServiceListener(SERVICE_TYPE, mDiscoveryListener);
+            mJmdns.removeServiceListener(mType, mDiscoveryListener);
         }
         mJmdns.unregisterAllServices();
         mExecutor.shutdown();
@@ -82,14 +94,14 @@ public class JmdnsPresenter implements DiscoverContract.Presenter {
     @Override
     public void startResearch() {
         if (!isSearching) {
-            startDiscover(SERVICE_TYPE);
+            startDiscover(mType);
         }
     }
 
     @Override
     public void stopResearch() {
         if (isSearching) {
-            mJmdns.removeServiceListener(SERVICE_TYPE, mDiscoveryListener);
+            mJmdns.removeServiceListener(mType, mDiscoveryListener);
         }
     }
 
@@ -117,7 +129,7 @@ public class JmdnsPresenter implements DiscoverContract.Presenter {
 
     void startDiscover(String serviceType) {
         mView.updateInfo("startDiscover-> serviceType:" + serviceType);
-        mJmdns.addServiceListener(SERVICE_TYPE, mDiscoveryListener);
+        mJmdns.addServiceListener(mType, mDiscoveryListener);
     }
 
     public void initDiscoverListener() {

@@ -26,13 +26,15 @@ public class DiscoverActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mvp);
 
+        String type = getIntent().getStringExtra("type");
+
         DiscoverFragment discoverFragment = (DiscoverFragment) getSupportFragmentManager().findFragmentById(R.id.layout_fragment_container);
         if (discoverFragment == null) {
             discoverFragment = DiscoverFragment.newInstance();
             ActivityUtils.addFragmentToActivity(getSupportFragmentManager(), discoverFragment, R.id.layout_fragment_container);
         }
         NsdManager nsdManager = (NsdManager) this.getSystemService(Context.NSD_SERVICE);
-        mDiscoverPresenter = new NsdPresenter(discoverFragment, nsdManager);
+        mDiscoverPresenter = new NsdPresenter(discoverFragment, nsdManager,type);
 
         WifiManager manager = (WifiManager) this
                 .getSystemService(Context.WIFI_SERVICE);

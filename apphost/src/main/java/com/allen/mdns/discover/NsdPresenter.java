@@ -3,6 +3,8 @@ package com.allen.mdns.discover;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 
+import com.allen.mdns.Welcome;
+
 import java.util.ArrayList;
 
 /**
@@ -12,7 +14,6 @@ import java.util.ArrayList;
  */
 public class NsdPresenter implements DiscoverContract.Presenter {
 
-    private static final  String SERVICE_TYPE = "_phibox._tcp.";
     private NsdManager.RegistrationListener mRegistrationListener;
     private NsdManager.DiscoveryListener mDiscoveryListener;
     private NsdManager mNsdManager;
@@ -20,20 +21,31 @@ public class NsdPresenter implements DiscoverContract.Presenter {
     private DiscoverContract.View mView;
     private boolean isSearching = false;
     private ArrayList<NsdServiceInfo> mServices= null;
+    private  String mType = null;
 
     NsdPresenter(DiscoverContract.View view, NsdManager manager) {
+        this(view, manager, Welcome.DEFAULT_TYPE);
+    }
+
+    NsdPresenter(DiscoverContract.View view, NsdManager manager, String type) {
         mNsdManager = manager;
         mView = view;
         mServices = new ArrayList<NsdServiceInfo>();
+
+        if(type != null){
+            mType = type;
+        }else{
+            mType = Welcome.DEFAULT_TYPE;
+        }
+
         mView.setPresenter(this);
         initializeRegistrationListener();
         initDiscoverListener();
     }
 
-
     @Override
     public void start() {
-        registerService("phicomm", SERVICE_TYPE, 10379);
+        registerService("phicomm", mType, 10379);
     }
 
     @Override
@@ -47,7 +59,7 @@ public class NsdPresenter implements DiscoverContract.Presenter {
     @Override
     public void startResearch() {
         if (!isSearching) {
-            startDiscover(SERVICE_TYPE);
+            startDiscover(mType);
         }
     }
 
@@ -111,7 +123,7 @@ public class NsdPresenter implements DiscoverContract.Presenter {
             @Override
             public void onServiceFound(NsdServiceInfo serviceInfo) {
                 mView.updateInfo("onServiceFound:" + serviceInfo);
-                if (!serviceInfo.getServiceType().equals(SERVICE_TYPE)){
+                if (!serviceInfo.getServiceType().equals(mType)){
                     mView.updateInfo("Unknown service type: " + serviceInfo.getServiceType());
                 } else if (serviceInfo.getServiceName().equals(mServiceName)){
                     mView.updateInfo("self service");

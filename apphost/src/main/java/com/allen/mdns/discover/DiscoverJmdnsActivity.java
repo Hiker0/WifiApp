@@ -25,6 +25,7 @@ public class DiscoverJmdnsActivity extends AppCompatActivity {
         initWindow();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mvp);
+        String type = getIntent().getStringExtra("type");
 
         DiscoverFragment discoverFragment = (DiscoverFragment) getSupportFragmentManager().findFragmentById(R.id.layout_fragment_container);
         if (discoverFragment == null) {
@@ -41,7 +42,7 @@ public class DiscoverJmdnsActivity extends AppCompatActivity {
         int address = wifiInfo.getIpAddress();
 
         String ip = intToIp(address);
-        mDiscoverPresenter = new JmdnsPresenter(discoverFragment,ip);
+        mDiscoverPresenter = new JmdnsPresenter(discoverFragment, ip, type);
 
         WifiManager manager = (WifiManager) this
                 .getSystemService(Context.WIFI_SERVICE);

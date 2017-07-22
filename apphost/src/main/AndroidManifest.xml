@@ -14,13 +14,16 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <activity android:name="com.allen.mdns.discover.DiscoverJmdnsActivity">
+        <activity android:name="com.allen.mdns.Welcome">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name="com.allen.mdns.discover.DiscoverActivity"/>
+        <activity android:name="com.allen.mdns.discover.DiscoverJmdnsActivity"/>
     </application>
 
 </manifest>
