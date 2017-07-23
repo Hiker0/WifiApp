@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gson.Gson;
+import com.phicomm.box.tvremote.Configs;
 import com.phicomm.box.tvremote.util.Utils;
 import com.phicomm.box.tvremote.beans.ApplicationInfo;
 import com.phicomm.box.tvremote.beans.ApplicationList;
@@ -31,10 +32,10 @@ import org.json.JSONObject;
  * last modified: 2017-05-17
  */
 public class RemoterServer extends NanoHTTPD {
-    final static String TAG = "Remoter";
-    final static int PORT = 8080;
-    public static final String MIME_PNG = "image/png";
-    public static final String MIME_JPG = "image/jpg";
+    private final static String TAG = "Remoter";
+    private final static int PORT = Configs.DEFAULT_SERVICE_PORT;;
+    private final static String MIME_PNG = "image/png";
+    private final static String MIME_JPG = "image/jpg";
 
     private IRemoterService mService;
     private Context mContext;

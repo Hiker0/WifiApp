@@ -55,7 +55,6 @@ public class RemoterCoreService extends Service {
         registerReceiver(mWifiStateReceiver, filter);
     }
 
-
     void startRemoteServer() {
         if (mRegisted) {
             return;
@@ -137,7 +136,7 @@ public class RemoterCoreService extends Service {
                 // resolve a conflict, so update the name you initially requested
                 // with the name Android actually used.
                 mServiceName = serviceInfo.getServiceName();
-                LogUtil.d( "onServiceRegistered:" + mServiceName);
+                LogUtil.d("onServiceRegistered:" + mServiceName);
             }
 
             @Override
@@ -164,7 +163,7 @@ public class RemoterCoreService extends Service {
     public class WifiStateReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            // TODO Auto-generated method stub
+
             if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
                 NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
                 if (info.getState().equals(NetworkInfo.State.DISCONNECTED)) {

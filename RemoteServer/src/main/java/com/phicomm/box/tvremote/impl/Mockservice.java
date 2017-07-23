@@ -23,7 +23,7 @@ import java.util.ArrayList;
  */
 public class Mockservice implements IRemoterService {
     private static final String TAG = "Remoter";
-    Context mContext;
+    private Context mContext;
 
     public Mockservice(Context context) {
         mContext = context;
@@ -46,7 +46,7 @@ public class Mockservice implements IRemoterService {
 
     @Override
     public String getSN() {
-        WifiManager wifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifiManager = (WifiManager) mContext.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
         int mIpAddress = wifiInfo.getIpAddress();

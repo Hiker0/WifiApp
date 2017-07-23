@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/RemoteServer/RemoteServer.iml" filepath="$PROJECT_DIR$/RemoteServer/RemoteServer.iml" />
       <module fileurl="file://$PROJECT_DIR$/UdpListener/UdpListener.iml" filepath="$PROJECT_DIR$/UdpListener/UdpListener.iml" />
       <module fileurl="file://$PROJECT_DIR$/WifiApp.iml" filepath="$PROJECT_DIR$/WifiApp.iml" />
       <module fileurl="file://$PROJECT_DIR$/appclient/appclient.iml" filepath="$PROJECT_DIR$/appclient/appclient.iml" />
